@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="LSPDebuggingTool/App.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/MainView.axaml" value="LSPDebuggingTool.Browser/LSPDebuggingTool.Browser.csproj" />
+        <entry key="LSPDebuggingTool/Views/MainWindow.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+      </map>
+    </option>
+  </component>
+</project>
