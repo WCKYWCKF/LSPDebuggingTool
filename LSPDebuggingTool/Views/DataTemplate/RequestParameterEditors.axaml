@@ -1,0 +1,33 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ursa="https://irihi.tech/ursa"
+             xmlns:views="using:LSPDebuggingTool.Views"
+             xmlns:vm="using:LSPDebuggingTool.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="LSPDebuggingTool.Views.RequestParameterEditors">
+    <UserControl.Styles>
+        <Style Selector="ursa|Form">
+            <Setter Property="LabelAlignment" Value="Left"></Setter>
+            <Setter Property="LabelPosition" Value="Left"></Setter>
+            <Setter Property="LabelWidth" Value="*"></Setter>
+            <Setter Property="HorizontalAlignment" Value="Stretch"></Setter>
+        </Style>
+    </UserControl.Styles>
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="vm:DidOpenTextDocumentPVM">
+            <ursa:Form>
+                <ComboBox ursa:FormItem.Label="活动文件" ursa:FormItem.IsRequired="True" HorizontalAlignment="Stretch"
+                          SelectedItem="123456" ItemsSource="{Binding Location.OpenedTexts}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"></TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </ursa:Form>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <vm:DidOpenTextDocumentPVM></vm:DidOpenTextDocumentPVM>
+</UserControl>

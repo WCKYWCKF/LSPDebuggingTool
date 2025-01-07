@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Open_Ancillary_Information_File" xml:space="preserve">
+        <value>打开附属信息文件</value>
+    </data>
+    <data name="Save_Ancillary_Information_File" xml:space="preserve">
+        <value>保存附属信息文件</value>
+    </data>
+    <data name="LSP_Operation_Record_Tab_Name" xml:space="preserve">
+        <value>LSP Server 工作台</value>
+    </data>
+    <data name="LSP_Workspace_Tab_Name" xml:space="preserve">
+        <value>LSP Client 工作区</value>
+    </data>
+    <data name="LSP_Startup_Parameters" xml:space="preserve">
+        <value>LSP Server 启动与初始化</value>
+    </data>
+    <data name="Generic_LSP_Requests" xml:space="preserve">
+        <value>通用LSP请求</value>
+    </data>
+    <data name="Expand_LSP_Requests" xml:space="preserve">
+        <value>拓展LSP请求</value>
+    </data>
+    <data name="Request_Parameter_Editing" xml:space="preserve">
+        <value>请求参数编辑</value>
+    </data>
+    <data name="LSP_Answer_Record" xml:space="preserve">
+        <value>LSP应答记录</value>
+    </data>
+</root>
