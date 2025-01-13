@@ -17,17 +17,19 @@ using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
 using AvaloniaEdit;
 using AvaloniaEdit.Indentation.CSharp;
-using AvaloniaEdit.Document;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.TextMate;
 using LSPDebuggingTool.Models;
 using LSPDebuggingTool.ViewModels;
 using Material.Icons;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using TextMateSharp.Grammars;
 using Ursa.Controls;
 using Ursa.ReactiveUIExtension;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+using TextDocument = AvaloniaEdit.Document.TextDocument;
 
 namespace LSPDebuggingTool.Views;
 
@@ -52,8 +54,15 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
         caret.Events().PositionChanged.Subscribe(_ =>
         {
             if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
-            locationInfo.LineNumber = caret.Line;
-            locationInfo.ColumnNumber = caret.Column;
+            locationInfo.Position = new Position(caret.Line, caret.Column);
+        });
+        ((TextEditor)_textEditor).TextArea.Events().SelectionChanged.Subscribe(_ =>
+        {
+            if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
+            var selection = _textEditor.TextArea.Selection;
+            locationInfo.Range = new Range(
+                new Position(selection.StartPosition.Line, selection.StartPosition.Column),
+                new Position(selection.EndPosition.Line, selection.EndPosition.Column));
         });
     }
 

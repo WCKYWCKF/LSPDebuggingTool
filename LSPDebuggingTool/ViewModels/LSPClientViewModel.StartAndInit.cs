@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using LSPDebuggingTool.Models;
+using LSPDebuggingTool.ViewModels.MessageBusEvent;
 using OmniSharp.Extensions.LanguageServer.Client;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.General;
@@ -138,7 +139,12 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         OpenedTexts = texts;
         share2.MergeMany(x => x.CloseCommand)
             .Subscribe(x => _openedTexts.Remove(x));
+        share2.OnItemAdded(x => { x.OpemCommand.Execute().Subscribe(); }).Subscribe();
         share2.Connect();
+        this.WhenAnyValue(x => x.LSPServerIsRunning)
+            .Where(x => x is false)
+            .Do(_ => { _openedTexts.Clear(); })
+            .Subscribe();
 
         _canSendRequestAsync = this.WhenAnyValue(
                 x => x.SelectedRequestParams!.ValidationContext.IsValid,
@@ -149,6 +155,12 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         {
             OpenedTexts = OpenedTexts
         };
+        MessageBus.Current.Listen<NeedLocationInfoEvent>()
+            .Subscribe(x => x.LocationInfo = LocationInfo);
+
+        this.WhenAnyValue(x => x.SelectedOpenedText)
+            .Do(x => LocationInfo.SelectedOpenedText = x)
+            .Subscribe();
     }
 
     [ReactiveCommand(CanExecute = nameof(_canStartLSPServer))]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.Json.Serialization;
+using LSPDebuggingTool.ViewModels.MessageBusEvent;
 using OmniSharp.Extensions.LanguageServer.Client;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -41,8 +42,12 @@ public abstract partial class RequestParamsViewModelBase : ReactiveValidationObj
     [JsonIgnore]
     public LocationInfo? Location
     {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        get
+        {
+            NeedLocationInfoEvent needLocationInfoEvent = new();
+            MessageBus.Current.SendMessage(needLocationInfoEvent);
+            return needLocationInfoEvent.LocationInfo;
+        }
     }
 
     public abstract RequestTaskViewModelBase? CreateRequestTask(LanguageClient languageClient);

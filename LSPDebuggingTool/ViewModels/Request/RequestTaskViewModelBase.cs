@@ -1,77 +1,87 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using MediatR;
 using OmniSharp.Extensions.LanguageServer.Client;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ReactiveUI;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace LSPDebuggingTool.ViewModels;
 
-[JsonDerivedType(typeof(DidOpenTextDocumentTVM), nameof(DidOpenTextDocumentTVM))]
 public abstract class RequestTaskViewModelBase : ViewModelBase
 {
-    protected RequestTaskViewModelBase()
-    {
-        this.WhenAnyValue(x => x.RequestTaskStatus)
-            .Subscribe(x =>
-            {
-                switch (x)
-                {
-                    case RequestTaskStatus.Running:
-                        TaskStartTime = DateTime.Now;
-                        break;
-                    case RequestTaskStatus.Completed or RequestTaskStatus.Failed:
-                        TaskEndTime = DateTime.Now;
-                        break;
-                }
-            });
-    }
-
-    public string? TaskName
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
+    public abstract string TaskName { get; }
 
     public DateTime TaskStartTime
     {
         get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public DateTime TaskEndTime
     {
         get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
+    public TimeSpan TaskDuration
+    {
+        get;
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public RequestTaskStatus RequestTaskStatus
     {
         get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public string? ErrorText
     {
         get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    [JsonIgnore]
-    public LanguageClient? LanguageClient
+    [JsonIgnore] public required LanguageClient LanguageClient { get; init; }
+
+    public int ProgressValue
     {
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
+    } = 0;
+
+    protected void Start()
+    {
+        RequestTaskStatus = RequestTaskStatus.Running;
+        TaskStartTime = DateTime.Now;
     }
 
-    [JsonIgnore]
-    public bool IsExpanded
+    protected void End(bool isFailed)
     {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    } = false;
+        RequestTaskStatus = isFailed ? RequestTaskStatus.Failed : RequestTaskStatus.Completed;
+        ProgressValue = 100;
+        TaskEndTime = DateTime.Now;
+        TaskDuration = TaskStartTime - TaskEndTime;
+    }
+
+    protected void Complete()
+    {
+        End(false);
+    }
+
+    protected void Failed(string errorText)
+    {
+        End(true);
+        ErrorText = errorText;
+    }
 
     public abstract Task RunTaskAsync();
+}
+
+public abstract class RequestTaskViewModelBase<T> : RequestTaskViewModelBase where T : IRequest
+{
+    public required T Params { get; init; }
 }
 
 public enum RequestTaskStatus

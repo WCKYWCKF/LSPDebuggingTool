@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LSPDebuggingTool.ViewModels.MessageBusEvent;
 using OmniSharp.Extensions.LanguageServer.Client;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ReactiveUI;
 using ReactiveUI.Validation.Extensions;
 
@@ -15,6 +21,12 @@ public class DidOpenTextDocumentPVM : RequestParamsViewModelBase
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
+    public string? LanguageId
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
     public DidOpenTextDocumentPVM()
     {
         Title = "文档打开通知（DidOpenTextDocument Notification）";
@@ -23,14 +35,104 @@ public class DidOpenTextDocumentPVM : RequestParamsViewModelBase
                       """;
         GroupName = GeneralRequestGroupNames.TextDocumentSynchronization;
 
-        this.ValidationRule(vm => vm.FilePath, x => true, "必须选择一个已经打开的文件");
-
-        // JsonSerializerOptions.Default.DefaultIgnoreCondition = JsonIgnoreCondition.Always;
-        
+        this.ValidationRule(vm => vm.FilePath, x =>
+        {
+            NeedLocationInfoEvent needLocationInfoEvent = new();
+            MessageBus.Current.SendMessage(needLocationInfoEvent);
+            var openedTexts = needLocationInfoEvent?.LocationInfo?.OpenedTexts;
+            return openedTexts is not null && openedTexts.Any(y => y.Path == x);
+        }, "必须选择一个已经打开的文件");
+        this.ValidationRule(vm => vm.LanguageId, x => LanguageIdentifier.LanguageIds.Any(y => y.LanguageId == x),
+            "这不是任何一个已知LanguageId,你需要确保它是正确的");
     }
 
     public override RequestTaskViewModelBase? CreateRequestTask(LanguageClient languageClient)
     {
-        return new DidOpenTextDocumentTVM() { LanguageClient = languageClient };
+        return new DidOpenTextDocumentTVM()
+        {
+            LanguageClient = languageClient,
+            Params = new DidOpenTextDocumentParams()
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    LanguageId = LanguageId!,
+                    Uri = DocumentUri.File(FilePath!),
+                    Text = File.ReadAllText(FilePath!)
+                }
+            }
+        };
     }
+}
+
+public class LanguageIdentifier
+{
+    public LanguageIdentifier(string languageName, string languageId)
+    {
+        LanguageName = languageName;
+        LanguageId = languageId;
+    }
+
+    public string LanguageName { get; }
+    public string LanguageId { get; }
+
+    public static List<LanguageIdentifier> LanguageIds { get; } =
+    [
+        new("ABAP", "abap"),
+        new("Windows Bat", "bat"),
+        new("BibTeX", "bibtex"),
+        new("Clojure", "clojure"),
+        new("Coffeescript", "coffeescript"),
+        new("C", "c"),
+        new("C++", "cpp"),
+        new("C#", "csharp"),
+        new("CSS", "css"),
+        new("Diff", "diff"),
+        new("Dart", "dart"),
+        new("Dockerfile", "dockerfile"),
+        new("Elixir", "elixir"),
+        new("Erlang", "erlang"),
+        new("F#", "fsharp"),
+        new("Git(commit)", "git-commit"),
+        new("Git(rebase)", "git-rebase"),
+        new("Go", "go"),
+        new("Groovy", "groovy"),
+        new("Handlebars", "handlebars"),
+        new("HTML", "html"),
+        new("Ini", "ini"),
+        new("Java", "java"),
+        new("JavaScript", "javascript"),
+        new("JavaScript React", "javascriptreact"),
+        new("JSON", "json"),
+        new("LaTeX", "latex"),
+        new("Less", "less"),
+        new("Lua", "lua"),
+        new("Makefile", "makefile"),
+        new("Markdown", "markdown"),
+        new("Objective-C", "objective-c"),
+        new("Objective-C++", "objective-cpp"),
+        new("Perl", "perl"),
+        new("Perl 6", "perl6"),
+        new("PHP", "php"),
+        new("Powershell", "powershell"),
+        new("Pug", "jade"),
+        new("Python", "python"),
+        new("R", "r"),
+        new("Razor (cshtml)", "razor"),
+        new("Ruby", "ruby"),
+        new("Rust", "rust"),
+        new("SCSS(syntax using curly brackets)", "scss"),
+        new("SCSS(indented syntax)", "sass"),
+        new("Scala", "scala"),
+        new("ShaderLab", "shaderlab"),
+        new("Shell Script (Bash)", "shellscript"),
+        new("SQL", "sql"),
+        new("Swift", "swift"),
+        new("TypeScript", "typescript"),
+        new("TypeScript React", "typescriptreact"),
+        new("TeX", "tex"),
+        new("Visual Basic", "vb"),
+        new("XML", "xml"),
+        new("XSL", "xsl"),
+        new("YAML", "yaml"),
+    ];
 }

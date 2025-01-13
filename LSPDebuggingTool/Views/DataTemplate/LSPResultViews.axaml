@@ -13,7 +13,7 @@
         </DataTemplate>
     </UserControl.DataTemplates>
     <ursa:Banner Type="Information" Classes="Bordered" HorizontalContentAlignment="Stretch">
-        <Expander IsExpanded="{Binding IsExpanded}" Content="{Binding}">
+        <Expander IsExpanded="True" Content="{Binding}">
             <Expander.Header>
                 <StackPanel Spacing="1">
                     <TextBlock Text="{Binding TaskName}"></TextBlock>

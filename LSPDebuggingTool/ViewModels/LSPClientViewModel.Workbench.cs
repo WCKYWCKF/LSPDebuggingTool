@@ -19,7 +19,7 @@ public partial class LSPClientViewModel
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
+    
     public ObservableCollection<RequestParamsViewModelBase> GeneralRequests
     {
         get;
@@ -32,7 +32,7 @@ public partial class LSPClientViewModel
 
     [JsonIgnore] public ReadOnlyObservableCollection<RequestGroupViewModel> ViewGeneralRequests { get; }
 
-    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
+    [JsonIgnore]
     public ObservableCollection<RequestTaskViewModelBase> RequestTasks
     {
         get;
@@ -57,7 +57,6 @@ public partial class LSPClientViewModel
         var requestTask = SelectedRequestParams!.CreateRequestTask(_languageClient!);
         if (requestTask is null) return;
         SelectedRequestParams!.LastUsed = DateTime.Now;
-        requestTask.IsExpanded = true;
         RequestTasks.Add(requestTask);
         await requestTask.RunTaskAsync();
     }

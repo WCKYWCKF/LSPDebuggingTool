@@ -13,6 +13,7 @@
         <FluentTheme DensityStyle="Compact" />
         <semi:SemiTheme Locale="zh-CN" />
         <semi-ursa:SemiTheme Locale="zh-CN" />
+        <semi:SemiPopupAnimations></semi:SemiPopupAnimations>
         <micon:MaterialIconStyles />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <!-- <StyleInclude Source="avares://Semi.Avalonia.DataGrid/Index.axaml" /> -->

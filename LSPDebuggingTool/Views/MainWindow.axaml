@@ -15,7 +15,7 @@
     x:Class="LSPDebuggingTool.Views.MainWindow"
     Icon="/Assets/Favicon/favicon.ico"
     x:DataType="vm:MainWindowViewModel"
-    Title="LSPDebuggingTool">
+    Title="{x:Static vm:MainWindowViewModel.AppTitle}">
     <ursa:UrsaWindow.LeftContent>
         <StackPanel Orientation="Horizontal" Spacing="1">
             <ursa:ButtonGroup>
@@ -301,7 +301,7 @@
                                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                                         <Button Classes="Small" Theme="{DynamicResource BorderlessButton}"
                                                 Content="{micon:MaterialIconExt Close}"
-                                                Command="{Binding CloseCommand}"/>
+                                                Command="{Binding CloseCommand}" />
                                         <!-- CommandParameter="{Binding }"  -->
                                         <!-- Command="{Binding $parent[TabStrip].((vm:MainWindowViewModel)DataContext).LSPClientViewModel.RemoveTextFileCommand}" -->
                                     </StackPanel>
@@ -323,9 +323,9 @@
                         </aedit:TextEditor>
                         <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*,8*" Margin="2">
                             <TextBlock Grid.Column="0" Classes="Secondary" VerticalAlignment="Center"
-                                       Text="{Binding LSPClientViewModel.LocationInfo.LineNumber,StringFormat='行：{0}'}" />
+                                       Text="{Binding LSPClientViewModel.LocationInfo.Position.Line,StringFormat='行：{0}'}" />
                             <TextBlock Grid.Column="1" Classes="Secondary" VerticalAlignment="Center"
-                                       Text="{Binding LSPClientViewModel.LocationInfo.ColumnNumber,StringFormat='列：{0}'}" />
+                                       Text="{Binding LSPClientViewModel.LocationInfo.Position.Character,StringFormat='列：{0}'}" />
                             <TextBlock Grid.Column="2" Classes="Secondary" VerticalAlignment="Center"
                                        Text="{Binding LSPClientViewModel.SelectedOpenedText.Path,StringFormat='当前活动的文件：{0}'}" />
                         </Grid>

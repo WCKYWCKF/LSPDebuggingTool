@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
@@ -26,17 +27,9 @@ public partial class LSPClientViewModel
     }
 
     [ReactiveCommand]
-    private async Task OpenTextFileAsync(TVEFileItem item)
+    private void OpenTextFile(TVEFileItem item)
     {
+        if (_openedTexts.Any(x => x.Path == item.Path)) return;
         _openedTexts.Add(item);
-        await item.OpemCommand.Execute(Unit.Default);
-    }
-
-    [ReactiveCommand]
-    private async Task RemoveTextFileAsync(TVEFileItem item)
-    {
-        return;
-        _openedTexts.Remove(item);
-        await item.CloseCommand.Execute(Unit.Default);
     }
 }

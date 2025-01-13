@@ -18,14 +18,20 @@
     <UserControl.DataTemplates>
         <DataTemplate DataType="vm:DidOpenTextDocumentPVM">
             <ursa:Form>
-                <ComboBox ursa:FormItem.Label="活动文件" ursa:FormItem.IsRequired="True" HorizontalAlignment="Stretch"
-                          SelectedItem="123456" ItemsSource="{Binding Location.OpenedTexts}">
+                <ComboBox ursa:FormItem.Label="活动文件" ursa:FormItem.IsRequired="True" 
+                          HorizontalAlignment="Stretch"
+                          SelectedItem="{Binding FilePath,Converter={x:Static views:GetFilePathConverter.Instance}}"
+                          ItemsSource="{Binding Location.OpenedTexts}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Name}"></TextBlock>
+                            <TextBlock Text="{Binding Name,Converter={x:Static views:GetFilePathConverter.Instance}}"></TextBlock>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+                <DockPanel ursa:FormItem.Label="LanguageId">
+                    <DropDownButton Content="使用"></DropDownButton>
+                    <TextBox Text="{Binding LanguageId}"></TextBox>
+                </DockPanel>
             </ursa:Form>
         </DataTemplate>
     </UserControl.DataTemplates>

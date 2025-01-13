@@ -28,6 +28,7 @@ namespace LSPDebuggingTool.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
+        public static string AppTitle { get; } = "LSP Debugging Tool (WIP)";
         [Reactive] private string? _ancillaryInfoFilePath;
 
         #region CanCommand
@@ -55,23 +56,6 @@ namespace LSPDebuggingTool.ViewModels
 
 
             _isAncillaryInfoLoadedHelper = _canSaveAncillaryInfo.ToProperty(this, nameof(IsAncillaryInfoLoaded));
-
-            // _testDataItems =
-            // [
-            //     new(4, "D"),
-            //     new(5, "E"),
-            //     new(6, "F"),
-            //     new(10, "alskdjf"),
-            //     new(1, "A"),
-            //     new(2, "B"),
-            //     new(3, "C"),
-            // ];
-            //
-            // _testDataItems.ToObservableChangeSet()
-            //     .Sort(SortExpressionComparer<TestDataItem>.Ascending(x => x.Year))
-            //     .Bind(out var list)
-            //     .Subscribe();
-            // TestDataItems = list;
         }
 
         [ReactiveCommand(CanExecute = nameof(_canSaveAncillaryInfo))]
@@ -200,26 +184,5 @@ namespace LSPDebuggingTool.ViewModels
         {
             throw new NotImplementedException();
         }
-    }
-}
-
-public class TestDataItem : ViewModelBase
-{
-    public TestDataItem(int year, string name)
-    {
-        Year = year;
-        Name = name;
-    }
-
-    public int Year
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    public string Name
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 }
