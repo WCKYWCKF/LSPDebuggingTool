@@ -12,6 +12,8 @@ public partial class TVEFileItem : TVEItemBase
     {
     }
 
+    [Reactive] private bool _isSendDidOpenTextDocumentPVM;
+
     public TextDocument Content
     {
         get;
@@ -34,6 +36,7 @@ public partial class TVEFileItem : TVEItemBase
     private TVEFileItem Close()
     {
         Content.Text = string.Empty;
+        // IsSendDidOpenTextDocumentPVM = false;
         return this;
     }
 }

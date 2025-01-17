@@ -3,9 +3,10 @@
 ## 介绍
 这是一个使用.Net9构建的Language Servers调试工具，用于帮助开发者在项目中接入Language Server Protocol（LSP）。
 
-项目支持NativeAOT。使用
 ## 功能
 * 能够便捷的调试[LSP文档](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)中定义的接口。
+* 对请求返回值提供一些简单的视觉化展示。
+* 预定义的接口参数编辑增强。
 
 ## 开发计划
 1. [x] 通用请求的发送

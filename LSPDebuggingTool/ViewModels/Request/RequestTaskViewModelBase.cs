@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Reactive.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Client;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace LSPDebuggingTool.ViewModels;
 
-public abstract class RequestTaskViewModelBase : ViewModelBase
+public  abstract  class RequestTaskViewModelBase : ViewModelBase
 {
     public abstract string TaskName { get; }
 
@@ -48,7 +50,7 @@ public abstract class RequestTaskViewModelBase : ViewModelBase
     public int ProgressValue
     {
         get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     } = 0;
 
     protected void Start()
@@ -62,7 +64,7 @@ public abstract class RequestTaskViewModelBase : ViewModelBase
         RequestTaskStatus = isFailed ? RequestTaskStatus.Failed : RequestTaskStatus.Completed;
         ProgressValue = 100;
         TaskEndTime = DateTime.Now;
-        TaskDuration = TaskStartTime - TaskEndTime;
+        TaskDuration = TaskEndTime - TaskStartTime;
     }
 
     protected void Complete()

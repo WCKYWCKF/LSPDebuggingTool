@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Security.AccessControl;
 
 namespace LSPDebuggingTool.Models;
 
@@ -21,25 +22,14 @@ public sealed class LogReader : ObservableCollection<string>, IDisposable
                 x => PropertyChanged += x,
                 x => PropertyChanged -= x)
             .Where(x => x.EventArgs.PropertyName == nameof(Path))
-            .Do(_ =>
-            {
-                Clear();
-                fileStream?.Dispose();
-                streamReader?.Dispose();
-                updateSubscription?.Dispose();
-                updateSubscription = null;
-                fileStream = null;
-                streamReader = null;
-                if (!File.Exists(Path)) return;
-                fileStream = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                streamReader = new StreamReader(fileStream);
-                UpdateItems();
-                updateSubscription = Observable.Interval(TimeSpan.FromSeconds(1))
-                    .Do(_ => UpdateItems())
-                    .Subscribe();
-            })
+            .Do(_ => InitLogReader())
             .Subscribe()
             .DisposeWith(_disposable);
+    }
+
+    public void Refresh()
+    {
+        InitLogReader();
     }
 
     public string? Path
@@ -57,6 +47,24 @@ public sealed class LogReader : ObservableCollection<string>, IDisposable
     {
         fileStream?.Dispose();
         streamReader?.Dispose();
+    }
+
+    private void InitLogReader()
+    {
+        Clear();
+        fileStream?.Dispose();
+        streamReader?.Dispose();
+        updateSubscription?.Dispose();
+        updateSubscription = null;
+        fileStream = null;
+        streamReader = null;
+        if (!File.Exists(Path)) return;
+        fileStream = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        streamReader = new StreamReader(fileStream);
+        UpdateItems();
+        updateSubscription = Observable.Interval(TimeSpan.FromSeconds(1))
+            .Do(_ => UpdateItems())
+            .Subscribe();
     }
 
     private void UpdateItems()

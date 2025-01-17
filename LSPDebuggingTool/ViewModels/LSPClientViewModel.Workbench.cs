@@ -19,7 +19,8 @@ public partial class LSPClientViewModel
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
-    
+
+    [JsonIgnore]
     public ObservableCollection<RequestParamsViewModelBase> GeneralRequests
     {
         get;
@@ -27,6 +28,7 @@ public partial class LSPClientViewModel
     } =
     [
         new DidOpenTextDocumentPVM(),
+        new DidCloseTextDocumentPVM(),
         new WillSaveTextDocumentPVM()
     ];
 
@@ -60,13 +62,25 @@ public partial class LSPClientViewModel
         RequestTasks.Add(requestTask);
         await requestTask.RunTaskAsync();
     }
+    
+    [ReactiveCommand]
+    private void RefreshLogReader()
+    {
+        LogReader.Refresh();
+    }
 }
 
-public sealed class RequestGroupViewModel : IDisposable
+public sealed class RequestGroupViewModel : ViewModelBase, IDisposable
 {
     public required IDisposable RequestsSubscribe { get; init; }
     public required string GroupName { get; init; }
     public required ReadOnlyObservableCollection<RequestParamsViewModelBase> Requests { get; init; }
+
+    public bool IsExpanded
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
 
     public void Dispose()
     {

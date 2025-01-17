@@ -15,6 +15,7 @@ using LSPDebuggingTool.Models;
 using LSPDebuggingTool.ViewModels.MessageBusEvent;
 using OmniSharp.Extensions.LanguageServer.Client;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.General;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using ReactiveUI;
@@ -110,7 +111,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         this.WhenAnyValue(x => x.RequestTasks)
             .Select(x => x.ToObservableChangeSet())
             .Switch()
-            .Sort(SortExpressionComparer<RequestTaskViewModelBase>.Descending(y => y.TaskStartTime))
+            .Sort(SortExpressionComparer<RequestTaskViewModelBase>.Ascending(y => y.TaskStartTime))
             .Bind(out var requestTaskViewModelBases)
             .Subscribe();
         ViewRequestTasks = requestTaskViewModelBases;
@@ -138,12 +139,32 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             .Subscribe();
         OpenedTexts = texts;
         share2.MergeMany(x => x.CloseCommand)
-            .Subscribe(x => _openedTexts.Remove(x));
+            .Subscribe(x =>
+            {
+                _openedTexts.Remove(x);
+                if (x.IsSendDidOpenTextDocumentPVM is false || _languageClient is null) return;
+                var didCloseTextDocumentTvm = new DidCloseTextDocumentTVM()
+                {
+                    LanguageClient = _languageClient,
+                    Params = new DidCloseTextDocumentParams()
+                        { TextDocument = new TextDocumentIdentifier(DocumentUri.File(x.Path)) }
+                };
+                RequestTasks.Add(didCloseTextDocumentTvm);
+#pragma warning disable VSTHRD110
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                didCloseTextDocumentTvm.RunTaskAsync();
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+#pragma warning restore VSTHRD110
+            });
         share2.OnItemAdded(x => { x.OpemCommand.Execute().Subscribe(); }).Subscribe();
         share2.Connect();
         this.WhenAnyValue(x => x.LSPServerIsRunning)
             .Where(x => x is false)
-            .Do(_ => { _openedTexts.Clear(); })
+            .Do(_ =>
+            {
+                _openedTexts.Clear();
+                RequestTasks.Clear();
+            })
             .Subscribe();
 
         _canSendRequestAsync = this.WhenAnyValue(

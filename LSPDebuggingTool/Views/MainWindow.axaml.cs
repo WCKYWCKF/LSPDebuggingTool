@@ -15,6 +15,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
+using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.Indentation.CSharp;
 using AvaloniaEdit.Editing;
@@ -42,11 +43,40 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
     public MainWindow()
     {
         InitializeComponent();
-        this.WhenAnyValue(x => x.ViewModel!.LSPClientViewModel!.LogReader.Count)
-            .Throttle(TimeSpan.FromSeconds(1))
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Do(_ => { _logScrollViewer.ScrollToEnd(); })
-            .Subscribe();
+        this.WhenActivated(disposable =>
+        {
+            this.WhenAnyValue(x => x.ViewModel!.LSPClientViewModel!.LogReader.Count)
+                .Throttle(TimeSpan.FromSeconds(1))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Do(_ => { _logScrollViewer.ScrollToEnd(); })
+                .Subscribe()
+                .DisposeWith(disposable);
+
+            this.WhenAnyObservable(x => x.ViewModel!.LSPClientViewModel!.OpenTextFileCommand)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Do(x => { _tabStrip.SelectedItem = x; })
+                .Subscribe()
+                .DisposeWith(disposable);
+
+            this.WhenAnyObservable(x => x.ViewModel!.LSPClientViewModel!.SendRequestCommand)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Do(_ => { _scrollViewerRT.ScrollToHome(); })
+                .Subscribe()
+                .DisposeWith(disposable);
+
+            ((TreeView)_treeViewGR).Events().PropertyChanged
+                .Where(x => x.Property.Name == nameof(TreeView.SelectedItem))
+                .Select(x => x.NewValue as RequestParamsViewModelBase)
+                .Where(x => x is not null)
+                .Do(x =>
+                {
+                    if (ViewModel?.LSPClientViewModel is not { } vm) return;
+                    vm.SelectedRequestParams = x;
+                })
+                .Subscribe()
+                .DisposeWith(disposable);
+        });
+
         // _textEditor.TextArea.IndentationStrategy =
         //     new CSharpIndentationStrategy();
         _textMateInstallation = _textEditor.InstallTextMate(_registryOptions);
@@ -136,14 +166,7 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 #pragma warning restore VSTHRD103
 #pragma warning restore VSTHRD002
     }
-
-    private void ChangeSelectedRequestParamsVM(object? sender, TappedEventArgs e)
-    {
-        if (sender is not TextBlock textBlock) return;
-        if (ViewModel?.LSPClientViewModel is null) return;
-        ViewModel.LSPClientViewModel.SelectedRequestParams = textBlock.DataContext as RequestParamsViewModelBase;
-    }
-
+    
 #pragma warning disable VSTHRD100
     private async void SelectLogFile(object? sender, RoutedEventArgs e)
 #pragma warning restore VSTHRD100

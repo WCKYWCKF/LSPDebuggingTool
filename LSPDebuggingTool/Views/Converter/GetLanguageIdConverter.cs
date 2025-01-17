@@ -5,9 +5,9 @@ using LSPDebuggingTool.ViewModels;
 
 namespace LSPDebuggingTool.Views;
 
-public class GetFilePathConverter : IValueConverter
+public class GetLanguageIdConverter : IValueConverter
 {
-    public static GetFilePathConverter Instance { get; } = new GetFilePathConverter();
+    public static GetLanguageIdConverter Instance { get; } = new GetLanguageIdConverter();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -16,6 +16,6 @@ public class GetFilePathConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return (value as TVEFileItem)?.Path;
+        return (value as LanguageIdentifier)?.LanguageId;
     }
 }

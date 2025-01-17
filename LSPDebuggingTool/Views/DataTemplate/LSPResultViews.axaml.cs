@@ -2,7 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace LSPDebuggingTool.Views.DataTemplate;
+namespace LSPDebuggingTool.Views;
 
 public partial class LSPResultViews : UserControl
 {

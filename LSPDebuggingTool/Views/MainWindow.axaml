@@ -169,22 +169,20 @@
                         <HeaderedContentControl
                             Grid.Row="0" Grid.Column="0"
                             Header="{x:Static lang:Resources.Generic_LSP_Requests}">
-                            <TreeView
+                            <TreeView Name="_treeViewGR"
                                 ItemsSource="{Binding LSPClientViewModel.ViewGeneralRequests}">
-                                <!-- <TreeView.Styles> -->
-                                <!--     <Style Selector="TreeViewItem"> -->
-                                <!--         <Setter Property="Background" Value="Transparent"></Setter> -->
-                                <!--     </Style> -->
-                                <!-- </TreeView.Styles> -->
+                                <TreeView.Styles>
+                                    <Style Selector="TreeView>TreeViewItem" x:DataType="vm:RequestGroupViewModel">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded}"></Setter>
+                                    </Style>
+                                </TreeView.Styles>
                                 <TreeView.DataTemplates>
                                     <TreeDataTemplate DataType="vm:RequestGroupViewModel"
                                                       ItemsSource="{Binding Requests}">
                                         <TextBlock Text="{Binding GroupName}" />
                                     </TreeDataTemplate>
                                     <DataTemplate DataType="vm:RequestParamsViewModelBase">
-                                        <TextBlock Text="{Binding Title}" HorizontalAlignment="Stretch"
-                                                   Background="Transparent"
-                                                   DoubleTapped="ChangeSelectedRequestParamsVM">
+                                        <TextBlock Text="{Binding Title}">
                                             <TextBlock.ContextFlyout>
                                                 <MenuFlyout>
                                                     <MenuItem Header="移除使用记录"
@@ -229,7 +227,17 @@
                             Theme="{DynamicResource CardBorder}" />
                         <HeaderedContentControl
                             Grid.Row="0" Grid.Column="2"
-                            Header="{x:Static lang:Resources.LSP_Answer_Record}" />
+                            Header="{x:Static lang:Resources.LSP_Answer_Record}">
+                            <ScrollViewer x:Name="_scrollViewerRT">
+                                <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.ViewRequestTasks}">
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate>
+                                            <views:LSPResultViews Margin="0,0,0,1"></views:LSPResultViews>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </ScrollViewer>
+                        </HeaderedContentControl>
                         <Border
                             Grid.Row="1" Grid.Column="2"
                             Theme="{DynamicResource CardBorder}" />
@@ -238,14 +246,17 @@
                             <HeaderedContentControl.Header>
                                 <Grid
                                     RowDefinitions="Auto,Auto"
-                                    ColumnDefinitions="Auto,Auto">
+                                    ColumnDefinitions="Auto,Auto,Auto">
                                     <TextBlock
                                         Grid.Row="0" Grid.Column="0" Text="LSP Server日志输出" VerticalAlignment="Center" />
                                     <Button
                                         Grid.Row="0" Grid.Column="1" Content="选择日志文件" Classes="Small"
                                         Click="SelectLogFile" />
+                                    <Button
+                                        Grid.Row="0" Grid.Column="2" Content="刷新日志读取" Classes="Small"
+                                        Command="{Binding LSPClientViewModel.RefreshLogReaderCommand}" />
                                     <TextBlock
-                                        Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Classes="Quaternary"
+                                        Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Classes="Quaternary"
                                         Text="{Binding LSPClientViewModel.LSPSeverLogFilePath}" />
                                 </Grid>
                             </HeaderedContentControl.Header>

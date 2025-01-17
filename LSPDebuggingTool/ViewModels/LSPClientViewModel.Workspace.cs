@@ -27,9 +27,10 @@ public partial class LSPClientViewModel
     }
 
     [ReactiveCommand]
-    private void OpenTextFile(TVEFileItem item)
+    private TVEFileItem? OpenTextFile(TVEFileItem item)
     {
-        if (_openedTexts.Any(x => x.Path == item.Path)) return;
+        if (_openedTexts.Any(x => x.Path == item.Path)) return null;
         _openedTexts.Add(item);
+        return item;
     }
 }
