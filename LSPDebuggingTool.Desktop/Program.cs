@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Reactive.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+// using Akavache;
 using Avalonia;
 using Avalonia.Dialogs;
 using Avalonia.Interactivity;

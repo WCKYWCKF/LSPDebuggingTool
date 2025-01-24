@@ -59,7 +59,7 @@ public  abstract  class RequestTaskViewModelBase : ViewModelBase
         TaskStartTime = DateTime.Now;
     }
 
-    protected void End(bool isFailed)
+    private void End(bool isFailed)
     {
         RequestTaskStatus = isFailed ? RequestTaskStatus.Failed : RequestTaskStatus.Completed;
         ProgressValue = 100;
