@@ -19,6 +19,7 @@ using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.Indentation.CSharp;
 using AvaloniaEdit.Editing;
+using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.TextMate;
 using LSPDebuggingTool.Models;
 using LSPDebuggingTool.ViewModels;
@@ -40,60 +41,73 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 
     private readonly TextMate.Installation _textMateInstallation;
 
+    private HighlightingColorizer? _highlightingColorizer;
+
     public MainWindow()
     {
         InitializeComponent();
         this.WhenActivated(disposable =>
         {
-            this.WhenAnyValue(x => x.ViewModel!.LSPClientViewModel!.LogReader.Count)
-                .Throttle(TimeSpan.FromSeconds(1))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Do(_ => { _logScrollViewer.ScrollToEnd(); })
-                .Subscribe()
-                .DisposeWith(disposable);
-
+            // this.WhenAnyValue(x => x.ViewModel!.LSPClientViewModel!.LogReader.Count)
+            //     .Throttle(TimeSpan.FromSeconds(1))
+            //     .ObserveOn(RxApp.MainThreadScheduler)
+            //     .Do(_ => { _logScrollViewer.ScrollToEnd(); })
+            //     .Subscribe()
+            //     .DisposeWith(disposable);
+            //
             this.WhenAnyObservable(x => x.ViewModel!.LSPClientViewModel!.OpenTextFileCommand)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Do(x => { _tabStrip.SelectedItem = x; })
+                .Do(x => { _openedTextFiles.SelectedItem = x; })
                 .Subscribe()
                 .DisposeWith(disposable);
 
             this.WhenAnyObservable(x => x.ViewModel!.LSPClientViewModel!.SendRequestCommand)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Do(_ => { _scrollViewerRT.ScrollToHome(); })
+                .Do(_ => { _requestLogItemsRepeater.ScrollToHome(); })
                 .Subscribe()
                 .DisposeWith(disposable);
 
-            ((TreeView)_treeViewGR).Events().PropertyChanged
-                .Where(x => x.Property.Name == nameof(TreeView.SelectedItem))
-                .Select(x => x.NewValue as RequestParamsViewModelBase)
-                .Where(x => x is not null)
+            this.WhenAnyValue(x => x.ViewModel!.LSPClientViewModel)
                 .Do(x =>
                 {
-                    if (ViewModel?.LSPClientViewModel is not { } vm) return;
-                    vm.SelectedRequestParams = x;
+                    _lSPIntegratedTextEditor.TextArea.TextView.LineTransformers.Remove(_highlightingColorizer);
+                    if (x is null) return;
+                    _lSPIntegratedTextEditor.TextArea.TextView.LineTransformers.Insert(0,
+                        _highlightingColorizer = new HighlightingColorizer(x.SemanticHighlighting));
                 })
                 .Subscribe()
                 .DisposeWith(disposable);
+
+            // ((TreeView)_treeViewGR).Events().PropertyChanged
+            //     .Where(x => x.Property.Name == nameof(TreeView.SelectedItem))
+            //     .Select(x => x.NewValue as RequestParamsViewModelBase)
+            //     .Where(x => x is not null)
+            //     .Do(x =>
+            //     {
+            //         if (ViewModel?.LSPClientViewModel is not { } vm) return;
+            //         vm.SelectedRequestParams = x;
+            //     })
+            //     .Subscribe()
+            //     .DisposeWith(disposable);
         });
 
         // _textEditor.TextArea.IndentationStrategy =
         //     new CSharpIndentationStrategy();
-        _textMateInstallation = _textEditor.InstallTextMate(_registryOptions);
-        Caret caret = _textEditor.TextArea.Caret;
-        caret.Events().PositionChanged.Subscribe(_ =>
-        {
-            if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
-            locationInfo.Position = new Position(caret.Line, caret.Column);
-        });
-        ((TextEditor)_textEditor).TextArea.Events().SelectionChanged.Subscribe(_ =>
-        {
-            if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
-            var selection = _textEditor.TextArea.Selection;
-            locationInfo.Range = new Range(
-                new Position(selection.StartPosition.Line, selection.StartPosition.Column),
-                new Position(selection.EndPosition.Line, selection.EndPosition.Column));
-        });
+        // _textMateInstallation = _textEditor.InstallTextMate(_registryOptions);
+        // Caret caret = _textEditor.TextArea.Caret;
+        // caret.Events().PositionChanged.Subscribe(_ =>
+        // {
+        //     if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
+        //     locationInfo.Position = new Position(caret.Line, caret.Column);
+        // });
+        // ((TextEditor)_textEditor).TextArea.Events().SelectionChanged.Subscribe(_ =>
+        // {
+        //     if (ViewModel?.LSPClientViewModel?.LocationInfo is not { } locationInfo) return;
+        //     var selection = _textEditor.TextArea.Selection;
+        //     locationInfo.Range = new Range(
+        //         new Position(selection.StartPosition.Line, selection.StartPosition.Column),
+        //         new Position(selection.EndPosition.Line, selection.EndPosition.Column));
+        // });
     }
 
     private void ArgumentTextBox_OnLoaded(object? sender, RoutedEventArgs e)
@@ -166,7 +180,7 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 #pragma warning restore VSTHRD103
 #pragma warning restore VSTHRD002
     }
-    
+
 #pragma warning disable VSTHRD100
     private async void SelectLogFile(object? sender, RoutedEventArgs e)
 #pragma warning restore VSTHRD100

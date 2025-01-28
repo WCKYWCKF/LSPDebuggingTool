@@ -81,7 +81,7 @@ public  abstract  class RequestTaskViewModelBase : ViewModelBase
     public abstract Task RunTaskAsync();
 }
 
-public abstract class RequestTaskViewModelBase<T> : RequestTaskViewModelBase where T : IRequest
+public abstract class RequestTaskViewModelBase<T> : RequestTaskViewModelBase
 {
     public required T Params { get; init; }
 }

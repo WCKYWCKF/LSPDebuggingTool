@@ -38,7 +38,7 @@
     <Grid Margin="0,36,0,0" RowDefinitions="Auto,*" IsEnabled="{Binding IsAncillaryInfoLoaded}">
         <TabStrip
             Name="TabStrip"
-            SelectedIndex="1"
+            SelectedIndex="0"
             PropertyChanged="TabStrip_OnPropertyChanged"
             Grid.Row="0">
             <TabStripItem Content="{x:Static lang:Resources.LSP_Startup_Parameters}">
@@ -141,7 +141,6 @@
                             Margin="5"
                             HorizontalAlignment="Right">
                             <Button
-
                                 Content="关闭LSP服务器"
                                 Command="{Binding LSPClientViewModel.CloseLSPServerCommand}" />
                             <Button
@@ -151,160 +150,51 @@
                     </Grid>
                 </TabStripItem.Tag>
             </TabStripItem>
-            <TabStripItem Content="{x:Static lang:Resources.LSP_Operation_Record_Tab_Name}">
+            <TabStripItem Content="LSP AvaloniaEdit集成">
                 <TabStripItem.Tag>
-                    <!-- LSP工作台 -->
-                    <Grid
-                        IsEnabled="{Binding IsAncillaryInfoLoaded}"
-                        ColumnDefinitions="3*,4*,3*"
-                        RowDefinitions="6*,4*,Auto">
-                        <Grid.Styles>
-                            <Style Selector="HeaderedContentControl">
-                                <Setter Property="Margin" Value="10" />
-                            </Style>
-                        </Grid.Styles>
-                        <Border
-                            Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
-                            Theme="{DynamicResource CardBorder}" />
-                        <HeaderedContentControl
-                            Grid.Row="0" Grid.Column="0"
-                            Header="{x:Static lang:Resources.Generic_LSP_Requests}">
-                            <TreeView Name="_treeViewGR"
-                                ItemsSource="{Binding LSPClientViewModel.ViewGeneralRequests}">
-                                <TreeView.Styles>
-                                    <Style Selector="TreeView>TreeViewItem" x:DataType="vm:RequestGroupViewModel">
-                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded}"></Setter>
-                                    </Style>
-                                </TreeView.Styles>
-                                <TreeView.DataTemplates>
-                                    <TreeDataTemplate DataType="vm:RequestGroupViewModel"
-                                                      ItemsSource="{Binding Requests}">
-                                        <TextBlock Text="{Binding GroupName}" />
-                                    </TreeDataTemplate>
-                                    <DataTemplate DataType="vm:RequestParamsViewModelBase">
-                                        <TextBlock Text="{Binding Title}">
-                                            <TextBlock.ContextFlyout>
-                                                <MenuFlyout>
-                                                    <MenuItem Header="移除使用记录"
-                                                              Command="{Binding RemoveUsageHistoryCommand}">
-                                                    </MenuItem>
-                                                </MenuFlyout>
-                                            </TextBlock.ContextFlyout>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </TreeView.DataTemplates>
-                            </TreeView>
-                        </HeaderedContentControl>
-                        <HeaderedContentControl
-                            Grid.Row="1" Grid.Column="0"
-                            Header="{x:Static lang:Resources.Expand_LSP_Requests}" />
-                        <Border
-                            Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                            Theme="{DynamicResource CardBorder}" />
-                        <HeaderedContentControl
-                            Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                            Header="{x:Static lang:Resources.Request_Parameter_Editing}">
-                            <Grid RowDefinitions="Auto,*,Auto">
-                                <Expander Grid.Row="0"
-                                          Header="{Binding LSPClientViewModel.SelectedRequestParams.Title}"
-                                          IsExpanded="False"
-                                          IsVisible="{Binding !!LSPClientViewModel.SelectedRequestParams}">
-                                    <TextBlock Text="{Binding LSPClientViewModel.SelectedRequestParams.Description}"
-                                               TextWrapping="Wrap" />
-                                </Expander>
-                                <ScrollViewer Grid.Row="1"
-                                              IsVisible="{Binding !!LSPClientViewModel.SelectedRequestParams}">
-                                    <views:RequestParameterEditors
-                                        Content="{Binding LSPClientViewModel.SelectedRequestParams}" />
-                                </ScrollViewer>
-                                <Button Grid.Row="2" HorizontalAlignment="Stretch" Content="发送请求"
-                                        Command="{Binding LSPClientViewModel.SendRequestCommand}"
-                                        IsVisible="{Binding !!LSPClientViewModel.SelectedRequestParams}" />
-                            </Grid>
-                        </HeaderedContentControl>
-                        <Border
-                            Grid.Row="0" Grid.Column="2"
-                            Theme="{DynamicResource CardBorder}" />
-                        <HeaderedContentControl
-                            Grid.Row="0" Grid.Column="2"
-                            Header="{x:Static lang:Resources.LSP_Answer_Record}">
-                            <ScrollViewer x:Name="_scrollViewerRT">
-                                <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.ViewRequestTasks}">
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <views:LSPResultViews Margin="0,0,0,1"></views:LSPResultViews>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </ScrollViewer>
-                        </HeaderedContentControl>
-                        <Border
-                            Grid.Row="1" Grid.Column="2"
-                            Theme="{DynamicResource CardBorder}" />
-                        <HeaderedContentControl
-                            Grid.Row="1" Grid.Column="2">
-                            <HeaderedContentControl.Header>
-                                <Grid
-                                    RowDefinitions="Auto,Auto"
-                                    ColumnDefinitions="Auto,Auto,Auto">
-                                    <TextBlock
-                                        Grid.Row="0" Grid.Column="0" Text="LSP Server日志输出" VerticalAlignment="Center" />
-                                    <Button
-                                        Grid.Row="0" Grid.Column="1" Content="选择日志文件" Classes="Small"
-                                        Click="SelectLogFile" />
-                                    <Button
-                                        Grid.Row="0" Grid.Column="2" Content="刷新日志读取" Classes="Small"
-                                        Command="{Binding LSPClientViewModel.RefreshLogReaderCommand}" />
-                                    <TextBlock
-                                        Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Classes="Quaternary"
-                                        Text="{Binding LSPClientViewModel.LSPSeverLogFilePath}" />
-                                </Grid>
-                            </HeaderedContentControl.Header>
-                            <ScrollViewer x:Name="_logScrollViewer" HorizontalScrollBarVisibility="Auto">
-                                <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.LogReader}">
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding}" Margin="5,0,0,0" />
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </ScrollViewer>
-                        </HeaderedContentControl>
-                    </Grid>
-                </TabStripItem.Tag>
-            </TabStripItem>
-            <TabStripItem Content="{x:Static lang:Resources.LSP_Workspace_Tab_Name}">
-                <TabStripItem.Tag> <!-- LSP工作区 -->
                     <Grid ColumnDefinitions="3*,7*" RowDefinitions="Auto,*,Auto"
                           IsEnabled="{Binding IsAncillaryInfoLoaded}">
                         <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Theme="{DynamicResource CardBorder}">
-                            <HeaderedContentControl Header="工作区解决方案查看器">
-                                <TreeView ItemsSource="{Binding LSPClientViewModel.FileSystems.Items}">
-                                    <TreeView.DataTemplates>
-                                        <DataTemplate DataType="vm:TVEFileItem">
-                                            <rxui:ReactiveUserControl x:TypeArguments="vm:TVEFileItem"
-                                                                      Initialized="Control_OnLoaded"
-                                                                      Background="Transparent">
+                            <TabControl>
+                                <TabItem Header="工作区解决方案查看器">
+                                    <TreeView ItemsSource="{Binding LSPClientViewModel.FileSystems.Items}">
+                                        <TreeView.DataTemplates>
+                                            <DataTemplate DataType="vm:TVEFileItem">
+                                                <rxui:ReactiveUserControl x:TypeArguments="vm:TVEFileItem"
+                                                                          Initialized="Control_OnLoaded"
+                                                                          Background="Transparent">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <micon:MaterialIcon
+                                                            Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
+                                                        <TextBlock Text="{Binding Name}" />
+                                                    </StackPanel>
+                                                </rxui:ReactiveUserControl>
+                                            </DataTemplate>
+                                            <TreeDataTemplate DataType="vm:TVEFolderItem" ItemsSource="{Binding Items}">
                                                 <StackPanel Orientation="Horizontal" Spacing="5">
                                                     <micon:MaterialIcon
                                                         Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
                                                     <TextBlock Text="{Binding Name}" />
                                                 </StackPanel>
-                                            </rxui:ReactiveUserControl>
-                                        </DataTemplate>
-                                        <TreeDataTemplate DataType="vm:TVEFolderItem" ItemsSource="{Binding Items}">
-                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <micon:MaterialIcon
-                                                    Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
-                                                <TextBlock Text="{Binding Name}" />
-                                            </StackPanel>
-                                        </TreeDataTemplate>
-                                    </TreeView.DataTemplates>
-                                </TreeView>
-                            </HeaderedContentControl>
+                                            </TreeDataTemplate>
+                                        </TreeView.DataTemplates>
+                                    </TreeView>
+                                </TabItem>
+                                <TabItem Header="LSP Server请求日志">
+                                    <ScrollViewer Name="_requestLogItemsRepeater">
+                                        <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.ViewRequestTasks}">
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate>
+                                                    <views:LSPResultViews Margin="0,1,0,1"/>
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </ScrollViewer>
+                                </TabItem>
+                            </TabControl>
                         </Border>
-                        <TabStrip Name="_tabStrip" Grid.Row="0" Grid.Column="1"
-                                  ItemsSource="{Binding LSPClientViewModel.OpenedTexts}"
+                        <TabStrip Name="_openedTextFiles" Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding LSPClientViewModel.ViewOpenedTexts}"
                                   SelectedItem="{Binding LSPClientViewModel.SelectedOpenedText}">
                             <TabStrip.ItemTemplate>
                                 <DataTemplate>
@@ -313,23 +203,19 @@
                                         <Button Classes="Small" Theme="{DynamicResource BorderlessButton}"
                                                 Content="{micon:MaterialIconExt Close}"
                                                 Command="{Binding CloseCommand}" />
-                                        <!-- CommandParameter="{Binding }"  -->
-                                        <!-- Command="{Binding $parent[TabStrip].((vm:MainWindowViewModel)DataContext).LSPClientViewModel.RemoveTextFileCommand}" -->
                                     </StackPanel>
                                 </DataTemplate>
                             </TabStrip.ItemTemplate>
                         </TabStrip>
-                        <aedit:TextEditor x:Name="_textEditor"
+                        <aedit:TextEditor x:Name="_lSPIntegratedTextEditor"
                                           Grid.Row="1" Grid.Column="1"
                                           ShowLineNumbers="True"
-                                          Document="{Binding #_tabStrip.((vm:TVEFileItem)SelectedItem).Content}"
-                                          Tag="{Binding #_tabStrip.((vm:TVEFileItem)SelectedItem)}"
-                                          PropertyChanged="AvaloniaObject_OnPropertyChanged"
-                                          ActualThemeVariantChanged="_tabStrip_OnActualThemeVariantChanged"
+                                          Document="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).Content}"
+                                          Tag="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem)}"
                                           FontFamily="Cascadia Code,Consolas,Menlo,Monospace">
                             <aedit:TextEditor.KeyBindings>
                                 <KeyBinding Gesture="Ctrl+S"
-                                            Command="{Binding #_tabStrip.((vm:TVEFileItem)SelectedItem).SaveCommand}" />
+                                            Command="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).SaveCommand}" />
                             </aedit:TextEditor.KeyBindings>
                         </aedit:TextEditor>
                         <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*,8*" Margin="2">
