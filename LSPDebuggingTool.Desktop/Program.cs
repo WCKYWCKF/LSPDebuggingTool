@@ -27,6 +27,9 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // var uri = new Uri(
+        //     @"D:\Project\Open Source Project\LanguageServer.Framework\LanguageServer.Framework\Protocol\Message\TextDocument\DidOpenTextDocumentParams.cs");
+        // return;
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
