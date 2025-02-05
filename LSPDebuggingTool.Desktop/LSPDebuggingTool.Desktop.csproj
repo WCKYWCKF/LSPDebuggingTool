@@ -21,6 +21,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AvaloniaEditLSPIntegration\AvaloniaEditLSPIntegration.csproj" />
         <ProjectReference Include="..\LSPDebuggingTool\LSPDebuggingTool.csproj"/>
+        <ProjectReference Include="..\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.csproj" />
     </ItemGroup>
 </Project>

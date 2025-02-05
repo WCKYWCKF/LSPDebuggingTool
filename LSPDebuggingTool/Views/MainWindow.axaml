@@ -185,7 +185,7 @@
                                         <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.ViewRequestTasks}">
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate>
-                                                    <views:LSPResultViews Margin="0,1,0,1"/>
+                                                    <views:LSPResultViews Margin="0,1,0,1" />
                                                 </DataTemplate>
                                             </ItemsRepeater.ItemTemplate>
                                         </ItemsRepeater>
@@ -228,6 +228,10 @@
                         </Grid>
                     </Grid>
                 </TabStripItem.Tag>
+            </TabStripItem>
+            <TabStripItem>
+                <micon:MaterialIcon
+                    Kind="File" />
             </TabStripItem>
         </TabStrip>
         <TransitioningContentControl x:Name="_transitioningContentControl" Grid.Row="1"

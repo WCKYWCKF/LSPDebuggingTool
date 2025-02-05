@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -402,8 +403,8 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         {
             options
                 .WithMaximumRequestTimeout(TimeSpan.FromSeconds(2))
-                .WithInput(_lSPServerProcess.StandardOutput.BaseStream)
-                .WithOutput(_lSPServerProcess.StandardInput.BaseStream)
+                .WithInput(PipeReader.Create(_lSPServerProcess.StandardOutput.BaseStream))
+                .WithOutput(PipeWriter.Create(_lSPServerProcess.StandardInput.BaseStream))
                 .WithWorkspaceFolder(DocumentUri.FromFileSystemPath(WorkspaceFolder!),
                     Path.GetDirectoryName(WorkspaceFolder!)!)
                 .WithRootPath(RootPath!);

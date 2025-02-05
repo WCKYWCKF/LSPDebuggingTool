@@ -58,4 +58,9 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AvaloniaEditLSPIntegration\AvaloniaEditLSPIntegration.csproj" />
+      <ProjectReference Include="..\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.csproj" />
+    </ItemGroup>
 </Project>
