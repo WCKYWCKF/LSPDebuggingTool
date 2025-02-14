@@ -31,24 +31,24 @@ public class LSPSemanticHighlightingEngine : IHighlighter
         _updateSemanticHighlightingTask = new CancellationTokenSource();
         Task.Run(() =>
         {
-            try
+            // try
+            // {
+            while (_updateSemanticHighlightingTask.IsCancellationRequested is false)
             {
-                while (_updateSemanticHighlightingTask.IsCancellationRequested is false)
+                while (_updateSemanticHighlightingTaskQueue.TryDequeue(out var task))
                 {
-                    while (_updateSemanticHighlightingTaskQueue.TryDequeue(out var task))
-                    {
-                        task.Invoke();
-                        TryFlushSemanticTokens();
-                    }
-
-                    Thread.Sleep(1);
+                    task.Invoke();
+                    TryFlushSemanticTokens();
                 }
+
+                Thread.Sleep(1);
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            // }
+            // catch (Exception e)
+            // {
+            //     Console.WriteLine(e);
+            //     throw;
+            // }
         }, _updateSemanticHighlightingTask.Token);
     }
 
@@ -203,6 +203,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
             {
                 _semanticTokens.RemoveRange((int)edit.Start, (int)edit.DeleteCount);
                 _semanticTokens.InsertRange((int)edit.Start, edit.Data);
+                if (_semanticTokens.Count == 0) continue;
                 var fullStart = Task.Run(() => GetSemanticTokensOfLineByOffset((int)edit.Start));
                 var fullEnd = Task.Run(() => GetSemanticTokensOfLineByOffset((int)edit.Start + edit.Data.Count));
                 //由于AvaloniaEdit的换行机制，所以多解析一行
@@ -266,6 +267,9 @@ public class LSPSemanticHighlightingEngine : IHighlighter
         //这是一串没有经过优化的代码
         int Cursor(bool leftOrRight)
         {
+            if (offset % 5 != 0) return 0;
+            if (offset > _semanticTokens.Count) return _semanticTokens.Count;
+            if (offset == _semanticTokens.Count) return offset;
             if (leftOrRight)
             {
                 if (offset + 1 >= _semanticTokens.Count || _semanticTokens[offset] != 0) return offset;
