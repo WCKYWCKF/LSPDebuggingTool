@@ -1,0 +1,4 @@
+[submodule "LanguageServer.Framework"]
+	path = LanguageServer.Framework
+	url = https://github.com/WCKYWCKF/LanguageServer.Framework.git
+	branch = languageclient-help
