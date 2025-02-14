@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using AvaloniaEdit;
-using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 
 namespace AvaloniaEditLSPIntegration;
@@ -14,83 +13,35 @@ namespace AvaloniaEditLSPIntegration;
 /// </summary>
 public class LSPTextEditor : TextEditor
 {
-    public static readonly StyledProperty<bool> EnableSemanticHighlightingProperty =
-        AvaloniaProperty.Register<LSPTextEditor, bool>(
-            nameof(EnableSemanticHighlighting));
-
-    public static readonly StyledProperty<bool> EnableSemanticHighlightingDeltaUpdateProperty =
-        AvaloniaProperty.Register<LSPTextEditor, bool>(
-            nameof(EnableSemanticHighlightingDeltaUpdate));
+    public static readonly StyledProperty<Func<uint, uint, HighlightingColor>?> GetSemanticColorProperty =
+        AvaloniaProperty.Register<LSPTextEditor, Func<uint, uint, HighlightingColor>?>(
+            nameof(GetSemanticColor));
 
     public LSPTextEditor()
     {
-        SemanticHighlighting = new SemanticHighlighting { Document = Document };
+        LspSemanticHighlightingEngine = new LSPSemanticHighlightingEngine { Document = Document };
+        TextArea.TextView.LineTransformers.Insert(0, new HighlightingColorizer(LspSemanticHighlightingEngine));
     }
 
-    public SemanticHighlighting SemanticHighlighting { get; }
+    protected override Type StyleKeyOverride { get; } = typeof(TextEditor);
 
-    public bool EnableSemanticHighlighting
+    public LSPSemanticHighlightingEngine LspSemanticHighlightingEngine { get; }
+
+    public Func<uint, uint, HighlightingColor>? GetSemanticColor
     {
-        get => GetValue(EnableSemanticHighlightingProperty);
-        set => SetValue(EnableSemanticHighlightingProperty, value);
-    }
-
-    public bool EnableSemanticHighlightingDeltaUpdate
-    {
-        get => GetValue(EnableSemanticHighlightingDeltaUpdateProperty);
-        set => SetValue(EnableSemanticHighlightingDeltaUpdateProperty, value);
-    }
-
-    public Action<DocumentChangeEventArgs>? DocumentContentChanged { get; set; }
-    public Func<IList<int>>? SemanticTokensFull { get; set; }
-    public Func<(IList<SemanticTokensEdit>?, IList<int>?)>? SemanticTokensDelta { get; set; }
-
-    public Func<int, int, HighlightingColor>? GetSemanticColor
-    {
-        get => SemanticHighlighting.GetColorByTypeAndModifiers;
-        set => SemanticHighlighting.GetColorByTypeAndModifiers = value;
-    }
-
-    protected override void OnDocumentChanged(DocumentChangedEventArgs e)
-    {
-        base.OnDocumentChanged(e);
-        e.OldDocument.Changed -= OnDocumentContentChanged;
-        SemanticHighlighting.Document = Document;
-        Document.Changed += OnDocumentContentChanged;
-        if (EnableSemanticHighlighting && SemanticTokensFull != null)
-            SemanticHighlighting.InitSemanticTokens(SemanticTokensFull());
-    }
-
-    private void OnDocumentContentChanged(object? sender, DocumentChangeEventArgs e)
-    {
-        DocumentContentChanged?.Invoke(e);
-        
-        if (EnableSemanticHighlighting && SemanticTokensFull != null)
+        get => GetValue(GetSemanticColorProperty);
+        set
         {
-            if (EnableSemanticHighlightingDeltaUpdate && SemanticTokensDelta != null)
-            {
-                var delta = SemanticTokensDelta();
-                if (delta.Item1 != null)
-                {
-                    SemanticHighlighting.UpdateSemanticTokens(delta.Item1);
-                }
-                else if (delta.Item2 != null)
-                {
-                    SemanticHighlighting.UpdateSemanticTokens(delta.Item2);
-                }
-            }
-            else
-            {
-                SemanticHighlighting.InitSemanticTokens(SemanticTokensFull());
-            }
+            SetValue(GetSemanticColorProperty, value);
+            LspSemanticHighlightingEngine.GetColorByTypeAndModifiers = value;
         }
     }
 
-    // public void SemanticHighlightingColorChanged()
-    // {
-    //     for (int i = 0; i < LineCount; i++)
-    //     {
-    //         SemanticHighlighting.UpdateHighlightingState(i + 1);
-    //     }
-    // }
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        if (change.Property == DocumentProperty)
+            if (LspSemanticHighlightingEngine is not null)
+                LspSemanticHighlightingEngine.Document = Document;
+        base.OnPropertyChanged(change);
+    }
 }

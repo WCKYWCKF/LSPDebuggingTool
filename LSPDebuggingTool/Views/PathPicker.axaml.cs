@@ -5,11 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Newtonsoft.Json;
-using ReactiveUI;
-using ReactiveUI.Validation.Abstractions;
-using ReactiveUI.Validation.Contexts;
-using ReactiveUI.Validation.Helpers;
 
 namespace LSPDebuggingTool.Views;
 
@@ -143,9 +138,4 @@ public partial class PathPicker : UserControl
         }
     }
 #pragma warning restore VSTHRD100
-}
-
-public record ReactiveValidatableRecord : ReactiveRecord, IValidatableViewModel
-{
-    [JsonIgnore] public IValidationContext ValidationContext { get; } = new ValidationContext();
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Buffers;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -7,26 +7,26 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using DynamicData;
 using DynamicData.Binding;
-using LSPDebuggingTool.Models;
-using LSPDebuggingTool.ViewModels.MessageBusEvent;
-using OmniSharp.Extensions.LanguageServer.Client;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.General;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
-using ReactiveMarbles.ObservableEvents;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.TextDocumentClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
+using EmmyLua.LanguageServer.Framework.Server;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
+using SemanticTokensEdit = AvaloniaEditLSPIntegration.SemanticTokensEdit;
 using TextDocument = AvaloniaEdit.Document.TextDocument;
 
 namespace LSPDebuggingTool.ViewModels;
@@ -40,18 +40,25 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     protected readonly CompositeDisposable _disposable = new();
 
     private readonly ObservableCollection<TVEFileItem> _openedTexts = [];
-    private IObservable<bool> _canSendRequestAsync;
+
+    private CancellationTokenSource? _cancellationTokenSourceForLogReaderTask;
+
     [ObservableAsProperty] private ObservableCollectionFileSystems? _fileSystems;
-    private LanguageClient? _languageClient;
     [Reactive] private bool _lSPServerIsRunning;
 
     private Process? _lSPServerProcess;
     [Reactive] private int _selectedIndex;
-    public SemanticHighlighting SemanticHighlighting { get; } = new();
+    private PipeWriter? _serverInputWriter;
+
+    private PipeReader? _serverOutputReader;
+    private StreamReader? _serverRunLogReader;
+    public LanguageServer? LanguageClientForEdit;
 
     public LSPClientViewModel()
     {
         Arguments = new ObservableCollection<StringUI>();
+        LogText = new TextDocument();
+        ViewOpenedTexts = new ObservableCollection<TVEFileItem>();
         _lSPServerIsRunning = false;
 
         _canStartLSPServer = this.WhenAnyValue(x => x.FileName, x => x.WorkspaceFolder, x => x.RootPath,
@@ -67,255 +74,22 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         _canRemoveArgument = this.WhenAnyValue(x => x.SelectedIndex)
             .Select(x => x >= 0);
 
-        // this.Changing.Where(x=>x.PropertyName==nameof(GeneralRequests)).Subscribe(x)
-        // this.WhenAnyValue(x => x.GeneralRequests)
-        //     .Select(x=>x.ToObservableChangeSet())
-        //     .Switch();
-        var share = this.WhenAnyValue(x => x.GeneralRequests)
-            .Select(x => x.ToObservableChangeSet())
-            .Switch()
-            .Publish();
-        share.GroupOn(x => x.GroupName)
-            .Transform(x =>
-            {
-                var disposable = x.List.Connect()
-                    .Sort(
-                        SortExpressionComparer<RequestParamsViewModelBase>
-                            .Descending(y => y.Title ?? string.Empty))
-                    .Bind(out var collection)
-                    .Subscribe();
-                return new RequestGroupViewModel
-                {
-                    RequestsSubscribe = disposable,
-                    GroupName = x.GroupKey,
-                    Requests = collection
-                };
-            })
-            .Or(share.AutoRefresh(x => x.LastUsed).GroupOn(x => x.LastUsed != DateTime.MinValue).Filter(x => x.GroupKey)
-                .Transform(x =>
-                    new RequestGroupViewModel
-                    {
-                        RequestsSubscribe = x.List.Connect()
-                            .Sort(SortExpressionComparer<RequestParamsViewModelBase>.Descending(y => y.LastUsed))
-                            .Bind(out var list1)
-                            .Subscribe(),
-                        GroupName = "使用过的请求",
-                        Requests = list1
-                    }))
-            .Sort(SortExpressionComparer<RequestGroupViewModel>
-                .Descending(x => x.GroupName == "使用过的请求")
-                .ThenByAscending(x => x.GroupName))
-            .Bind(out var list)
-            .DisposeMany()
-            .Subscribe();
-        ViewGeneralRequests = list;
-        share.Connect();
-
-        RequestTasks = [];
-        this.WhenAnyValue(x => x.RequestTasks)
-            .Select(x => x.ToObservableChangeSet())
-            .Switch()
-            .Sort(SortExpressionComparer<RequestTaskViewModelBase>.Ascending(y => y.TaskStartTime))
-            .Bind(out var requestTaskViewModelBases)
-            .Subscribe();
-        ViewRequestTasks = requestTaskViewModelBases;
-
-        _fileSystemsHelper = this.WhenAnyValue(x => x.RootPath, x => x.LSPServerIsRunning)
-            .Select(x =>
-            {
-                _fileSystems?.Dispose();
-                return !string.IsNullOrEmpty(x.Item1) && LSPServerIsRunning
-                    ? new ObservableCollectionFileSystems(x.Item1!)
-                    : null;
-            })
+        _fileSystemsHelper = this.WhenAnyValue(x => x.RootPath)
+            .Select(x => string.IsNullOrWhiteSpace(x) ? null : new ObservableCollectionFileSystems(x))
             .ToProperty(this, nameof(FileSystems));
 
-        LogReader = new LogReader();
-        LogReader.DisposeWith(_disposable);
-        this.WhenAnyValue(x => x.LSPSeverLogFilePath)
-            .Do(x => LogReader.Path = x)
-            .Subscribe();
+        ViewOpenedTexts.ToObservableChangeSet()
+            .MergeMany(x => x.CloseCommand)
+            .InvokeCommand(CloseFileCommand);
 
-        var share2 = _openedTexts.ToObservableChangeSet().Publish();
-        share2
-            .Sort(SortExpressionComparer<TVEFileItem>.Ascending(x => x.Name))
-            .Bind(out var texts)
-            .Subscribe();
-        ViewOpenedTexts = texts;
-        share2.MergeMany(x => x.CloseCommand)
-            .Subscribe(x =>
-            {
-                _openedTexts.Remove(x);
-                if (x.IsSendDidOpenTextDocumentPVM is false || _languageClient is null) return;
-                var didCloseTextDocumentTvm = new DidCloseTextDocumentTVM
-                {
-                    LanguageClient = _languageClient,
-                    Params = new DidCloseTextDocumentParams
-                        { TextDocument = new TextDocumentIdentifier(DocumentUri.File(x.Path)) }
-                };
-                RequestTasks.Add(didCloseTextDocumentTvm);
-#pragma warning disable VSTHRD110
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                didCloseTextDocumentTvm.RunTaskAsync();
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-#pragma warning restore VSTHRD110
-            });
-        share2.Connect();
-        this.WhenAnyValue(x => x.LSPServerIsRunning)
-            .Where(x => x is false)
-            .Do(_ =>
-            {
-                _openedTexts.Clear();
-                RequestTasks.Clear();
-            })
-            .Subscribe();
-
-        _canSendRequestAsync = this.WhenAnyValue(
-                x => x.SelectedRequestParams!.ValidationContext.IsValid,
-                x => x.LSPServerIsRunning)
-            .Select(x => x is { Item1: true, Item2: true });
-
-        LocationInfo = new LocationInfo
-        {
-            OpenedTexts = ViewOpenedTexts
-        };
-        MessageBus.Current.Listen<NeedLocationInfoEvent>()
-            .Subscribe(x => x.LocationInfo = LocationInfo);
-
-        this.WhenAnyValue(x => x.SelectedOpenedText)
-            .Do(x => LocationInfo.SelectedOpenedText = x)
-            .Subscribe();
-
-        //LSP Server的文档更改同步和语义令牌更新接入
-        this.Events().PropertyChanging
-            .Where(x => x.PropertyName == nameof(SelectedOpenedText)
-                        && SelectedOpenedText is not null)
-            .Do(_ =>
-            {
-                SelectedOpenedText!.Content.Changing -= ContentOnChanged;
-                SemanticHighlighting.SemanticTokens.Clear();
-            })
-            .Subscribe();
-        this.WhenAnyValue(x => x.SelectedOpenedText)
-#pragma warning disable VSTHRD101
-            .Do(async x =>
-            {
-                if (x is not null)
-                {
-                    SelectedOpenedText!.Content.Changing += ContentOnChanged;
-                    SemanticHighlighting.Document = SelectedOpenedText!.Content;
-                    RequestingSemanticTokensForFullFileTVM requestingSemanticTokensForFullFileTvm =
-                        new()
-                        {
-                            LanguageClient = _languageClient!,
-                            Params = new SemanticTokensParams()
-                            {
-                                TextDocument = new TextDocumentIdentifier(DocumentUri.File(SelectedOpenedText.Path)),
-                            }
-                        };
-                    await SendRequestAsync(requestingSemanticTokensForFullFileTvm);
-                    if (requestingSemanticTokensForFullFileTvm.Result is null) return;
-                    SemanticHighlighting.SemanticTokens.AddRange(
-                        SemanticToken.Pares(requestingSemanticTokensForFullFileTvm.Result));
-                }
-                else
-                {
-                    SemanticHighlighting.Document = new TextDocument();
-                }
-            })
-#pragma warning restore VSTHRD101
-            .Subscribe();
+        DocumentContentChanged = DocumentContentChangedP;
+        SemanticTokensFull = SemanticTokensFullP;
+        SemanticTokensDelta = SemanticTokensDeltaP;
     }
 
-    private async void ContentOnChanged(object? sender, DocumentChangeEventArgs e)
-    {
-        SemanticHighlighting.SemanticTokens.Clear();
-        var doc = SelectedOpenedText!.Content;
-        var start = doc.GetLocation(e.Offset);
-        var end = doc.GetLocation(e.Offset + e.RemovalLength);
-        await SendRequestAsync(new DidChangeTextDocumentTVM()
-        {
-            LanguageClient = _languageClient!,
-            Params = new DidChangeTextDocumentParams()
-            {
-                TextDocument = new OptionalVersionedTextDocumentIdentifier()
-                {
-                    Uri = DocumentUri.File(SelectedOpenedText!.Path),
-                    Version = SelectedOpenedText.Version
-                },
-                ContentChanges = new TextDocumentContentChangeEvent[]
-                {
-                    new TextDocumentContentChangeEvent()
-                    {
-                        Text = e.InsertedText.Text,
-                        Range = new Range(start.Line - 1, start.Column - 1, end.Line - 1, end.Column - 1),
-                        RangeLength = e.RemovalLength,
-                    }
-                }
-            }
-        });
-        RequestingSemanticTokensForFullFileTVM requestingSemanticTokensForFullFileTvm =
-            new()
-            {
-                LanguageClient = _languageClient!,
-                Params = new SemanticTokensParams()
-                {
-                    TextDocument = new TextDocumentIdentifier(DocumentUri.File(SelectedOpenedText.Path)),
-                }
-            };
-        // await _languageClient.RequestDocumentSymbol(new DocumentSymbolParams()
-        // {
-        //     TextDocument = new TextDocumentIdentifier(DocumentUri.File(SelectedOpenedText.Path))
-        // });
-        // await _languageClient!.RequestDocumentLink(new DocumentLinkParams()
-        // {
-        //     TextDocument = new TextDocumentIdentifier(DocumentUri.File(SelectedOpenedText.Path))
-        // });
-        await SendRequestAsync(requestingSemanticTokensForFullFileTvm);
-        if (requestingSemanticTokensForFullFileTvm.Result is null) return;
-        SemanticHighlighting.SemanticTokens.AddRange(
-            SemanticToken.Pares(requestingSemanticTokensForFullFileTvm.Result));
-    }
+    [JsonIgnore] public TextDocument LogText { get; }
 
-    [JsonIgnore]
-    public RequestParamsViewModelBase? SelectedRequestParams
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    [JsonIgnore]
-    public ObservableCollection<RequestParamsViewModelBase> GeneralRequests
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    } =
-    [
-        new DidOpenTextDocumentPVM(),
-        new DidCloseTextDocumentPVM(),
-        new WillSaveTextDocumentPVM()
-    ];
-
-    [JsonIgnore] public ReadOnlyObservableCollection<RequestGroupViewModel> ViewGeneralRequests { get; }
-
-    [JsonIgnore]
-    public ObservableCollection<RequestTaskViewModelBase> RequestTasks
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    [JsonIgnore] public ReadOnlyObservableCollection<RequestTaskViewModelBase> ViewRequestTasks { get; }
-
-    public string? LSPSeverLogFilePath
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    [JsonIgnore] public LogReader LogReader { get; }
-
-    [JsonIgnore] public ReadOnlyObservableCollection<TVEFileItem> ViewOpenedTexts { get; }
+    [JsonIgnore] public ObservableCollection<TVEFileItem> ViewOpenedTexts { get; }
 
     [JsonIgnore]
     public TVEFileItem? SelectedOpenedText
@@ -324,7 +98,11 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    [JsonIgnore] public LocationInfo LocationInfo { get; }
+    public Func<(IList<SemanticTokensEdit>?, IList<uint>?)> SemanticTokensDelta { get; }
+
+    public Action<DocumentChangeEventArgs> DocumentContentChanged { get; }
+
+    public Func<IList<uint>> SemanticTokensFull { get; }
 
     public void Dispose()
     {
@@ -333,54 +111,32 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     }
 
     [ReactiveCommand]
-    private async Task<TVEFileItem?> OpenTextFile(TVEFileItem item)
+    private async Task OpenFileAsync(TVEFileItem item)
     {
-        if (_openedTexts.Any(x => x.Path == item.Path)
-            || _languageClient == null) return null;
         await item.OpenCommand.Execute();
-        _openedTexts.Add(item);
-        if (string.IsNullOrWhiteSpace(item.LanguageId) is false)
+        await LanguageClientForEdit!.SendDidOpenTextDocumentNotification(new DidOpenTextDocumentParams
         {
-            var didOpenTextDocumentTvm = new DidOpenTextDocumentTVM
+            TextDocument = new TextDocumentItem
             {
-                LanguageClient = _languageClient,
-                Params = new DidOpenTextDocumentParams
-                {
-                    TextDocument = new TextDocumentItem
-                    {
-                        LanguageId = item.LanguageId,
-                        Uri = DocumentUri.File(item.Path),
-                        Text = item.Content.Text,
-                        Version = 0
-                    }
-                }
-            };
-            await SendRequestAsync(didOpenTextDocumentTvm);
-            item.IsSendDidOpenTextDocumentPVM = true;
-        }
-
-        return item;
-    }
-
-    [ReactiveCommand(CanExecute = nameof(_canSendRequestAsync))]
-    private async Task SendRequestAsync(RequestTaskViewModelBase? requestParams)
-    {
-        var requestTask = requestParams
-                          ?? SelectedRequestParams!.CreateRequestTask(_languageClient!);
-        if (requestTask is null) return;
-        // SelectedRequestParams!.LastUsed = DateTime.Now;
-        RequestTasks.Add(requestTask);
-        await requestTask.RunTaskAsync();
+                Uri = new DocumentUri(new Uri(item.Path)),
+                LanguageId = item.LanguageId ?? "plaintext",
+                Text = item.Content.Text,
+                Version = item.Version
+            }
+        });
+        ViewOpenedTexts.Add(item);
     }
 
     [ReactiveCommand]
-    private void RefreshLogReader()
+    private Task CloseFileAsync(TVEFileItem item)
     {
-        LogReader.Refresh();
+        ViewOpenedTexts.Remove(item);
+        // await item.CloseCommand.Execute();
+        return LanguageClientForEdit!.SendDidCloseTextDocumentNotification(new DidCloseTextDocumentParams
+        {
+            TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(item.Path)))
+        });
     }
-
-    private StreamReader? streamReaderinput;
-    private StreamReader? streamReaderoutput;
 
     [ReactiveCommand(CanExecute = nameof(_canStartLSPServer))]
     private async Task StartLSPServerAsync()
@@ -393,35 +149,156 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
                 CreateNoWindow = true,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
-            },
+                RedirectStandardError = true
+            }
         };
         _lSPServerProcess.StartInfo.ArgumentList.Add(Arguments.Select(x => x.Text!));
         _lSPServerProcess.Start();
         LSPServerIsRunning = true;
-        streamReaderoutput = new(_lSPServerProcess.StandardOutput.BaseStream);
-        _languageClient = await Task.Run(() => LanguageClient.Create(options =>
+        _serverInputWriter = PipeWriter.Create(_lSPServerProcess.StandardInput.BaseStream);
+        _serverOutputReader = PipeReader.Create(_lSPServerProcess.StandardOutput.BaseStream);
+        _serverRunLogReader = new StreamReader(_lSPServerProcess.StandardError.BaseStream);
+
+        LanguageClientForEdit =
+            LanguageServer.From(_lSPServerProcess.StandardOutput.BaseStream, _serverInputWriter.AsStream());
+        LanguageClientForEdit.AddJsonSerializeContext(JsonProtocolContext.Default);
+        Task.Run(LanguageClientForEdit.Run);
+        // Task.Run(LanguageClientForEdit.Run);
+        LogText.Text = string.Empty;
+        _cancellationTokenSourceForLogReaderTask = new CancellationTokenSource();
+        Task.Run(LogReaderTask);
+        var serverC = await LanguageClientForEdit.SendInitializeRequest(new InitializeParams
         {
-            options
-                .WithMaximumRequestTimeout(TimeSpan.FromSeconds(2))
-                .WithInput(PipeReader.Create(_lSPServerProcess.StandardOutput.BaseStream))
-                .WithOutput(PipeWriter.Create(_lSPServerProcess.StandardInput.BaseStream))
-                .WithWorkspaceFolder(DocumentUri.FromFileSystemPath(WorkspaceFolder!),
-                    Path.GetDirectoryName(WorkspaceFolder!)!)
-                .WithRootPath(RootPath!);
-        }));
-        await _languageClient.Initialize(CancellationToken.None);
+            ProcessId = null,
+            ClientInfo = new ClientInfo
+            {
+                Name = "Typst LSP test",
+                Version = "1.0.0"
+            },
+            Locale = "zh-cn",
+            RootUri = new DocumentUri(new Uri(RootPath)),
+            RootPath = RootPath,
+            WorkspaceFolders =
+            [
+                new WorkspaceFolder(new DocumentUri(new Uri(WorkspaceFolder)), WorkspaceFolder)
+            ],
+            Trace = TraceValue.Off,
+            Capabilities = new ClientCapabilities
+            {
+                Workspace = new WorkspaceClientCapabilities
+                {
+                    WorkspaceFolders = true
+                },
+                TextDocument = new TextDocumentClientCapabilities(),
+                Window = new WindowClientCapabilities
+                {
+                    WorkDoneProgress = true
+                },
+                General = new GeneralClientCapabilities(),
+                Experimental = JsonDocument.Parse("{}")
+            },
+            InitializationOptions = JsonDocument.Parse("{}")
+        }, TimeSpan.FromSeconds(2));
+        await LanguageClientForEdit.SendInitializedNotification();
+    }
+
+    private async Task LogReaderTask()
+    {
+        if (_cancellationTokenSourceForLogReaderTask is null) return;
+        while (LSPServerIsRunning && _serverRunLogReader != null)
+        {
+            var result = await _serverRunLogReader.ReadLineAsync(_cancellationTokenSourceForLogReaderTask.Token);
+            var str = result;
+            // string str = Encoding.UTF8.GetString(result.Buffer);
+            Console.WriteLine(str);
+            await Dispatcher.UIThread.InvokeAsync(() => LogText.Insert(LogText.TextLength, str));
+        }
+    }
+
+    private (IList<SemanticTokensEdit>?, IList<uint>?) SemanticTokensDeltaP()
+    {
+        if (LSPServerIsRunning
+            && LanguageClientForEdit is not null
+            && SelectedOpenedText is not null)
+        {
+            var result = LanguageClientForEdit.SendSemanticTokensForDeltaRequest(new SemanticTokensDeltaParams
+            {
+                TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path))),
+                PreviousResultId = SelectedOpenedText.LatestSemanticVersion!
+            }, TimeSpan.FromSeconds(2)).Result;
+            switch (result)
+            {
+                case SemanticTokensDelta semanticTokensDelta:
+                    SelectedOpenedText.LatestSemanticVersion = semanticTokensDelta.ResultId;
+                    return (
+                        semanticTokensDelta.Edits
+                            .Select(x => new SemanticTokensEdit(x.Start, x.DeleteCount, x.Data ?? []))
+                            .ToList(), null);
+                case SemanticTokens semanticTokens:
+                    SelectedOpenedText.LatestSemanticVersion = semanticTokens.ResultId;
+                    return (null, semanticTokens.Data);
+            }
+        }
+
+        return (null, null);
+    }
+
+    private void DocumentContentChangedP(DocumentChangeEventArgs obj)
+    {
+        if (LSPServerIsRunning
+            && LanguageClientForEdit is not null
+            && SelectedOpenedText is not null)
+        {
+            var start = SelectedOpenedText.Content.GetLocation(obj.Offset);
+            var end = SelectedOpenedText.Content.GetLocation(obj.Offset + obj.RemovalLength);
+            LanguageClientForEdit.SendDidChangeTextDocumentNotification(new DidChangeTextDocumentParams
+            {
+                TextDocument = new VersionedTextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)),
+                    SelectedOpenedText.Version),
+                ContentChanges =
+                [
+                    new TextDocumentContentChangeEvent
+                    {
+                        Range = new DocumentRange(new Position(start.Line - 1, start.Column - 1),
+                            new Position(end.Line - 1, end.Column - 1)),
+                        RangeLength = obj.RemovalLength,
+                        Text = obj.InsertedText.Text
+                    }
+                ]
+            }).Wait();
+        }
+    }
+
+    private IList<uint> SemanticTokensFullP()
+    {
+        if (LSPServerIsRunning
+            && LanguageClientForEdit is not null
+            && SelectedOpenedText is not null)
+        {
+            var result = Task.Run(async () => await LanguageClientForEdit.SendSemanticTokensForFullRequest(
+                new SemanticTokensParams
+                {
+                    TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)))
+                }, TimeSpan.FromSeconds(2))).Result;
+            if (result is null) return [];
+            SelectedOpenedText.LatestSemanticVersion = result.ResultId;
+            return result.Data;
+        }
+
+        return [];
     }
 
     [ReactiveCommand(CanExecute = nameof(_canCloseLSPServer))]
     private void CloseLSPServer()
     {
-        _languageClient?.SendShutdown(new ShutdownParams());
-        _languageClient?.SendExit(new ExitParams());
-        _languageClient?.Dispose();
+        LanguageClientForEdit?.SendShutdownRequest(TimeSpan.FromSeconds(2)).Wait();
+        LanguageClientForEdit?.SendExitNotification();
+        LSPServerIsRunning = false;
+        _cancellationTokenSourceForLogReaderTask?.Cancel();
+        _cancellationTokenSourceForLogReaderTask?.Dispose();
         _lSPServerProcess?.Kill(true);
         _lSPServerProcess?.Dispose();
         _lSPServerProcess = null;
-        LSPServerIsRunning = false;
     }
 
     [ReactiveCommand]
@@ -483,3 +360,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
 
     #endregion
 }
+
+[JsonSerializable(typeof(SemanticTokensDeltaParams))]
+[JsonSerializable(typeof(SemanticTokensDelta))]
+public partial class JsonProtocolContext : JsonSerializerContext;

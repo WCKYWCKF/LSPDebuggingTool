@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Open Source Project\LanguageServer.Framework\LanguageServer.Framework\LanguageServer.Framework.csproj"/>
+        <PackageReference Include="ReactiveUI" Version="20.1.63"/>
     </ItemGroup>
 
 </Project>

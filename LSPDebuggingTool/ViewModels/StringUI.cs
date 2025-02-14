@@ -1,5 +1,4 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using ReactiveUI;
+﻿using ReactiveUI;
 
 namespace LSPDebuggingTool.ViewModels;
 

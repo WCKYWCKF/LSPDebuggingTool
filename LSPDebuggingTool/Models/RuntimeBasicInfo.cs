@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.IO;
 using Serilog;
 
@@ -29,7 +28,7 @@ public static class RuntimeBasicInfo
     public static string SettingPath { get; } = Path.Combine(BasicPath, "Settings.json");
 
     public static ILogger Log { get; }
-    
+
 
     private static string CheckPath(string path)
     {
@@ -37,4 +36,3 @@ public static class RuntimeBasicInfo
         return path;
     }
 }
-

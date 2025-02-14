@@ -1,18 +1,18 @@
 namespace AvaloniaEditLSPIntegration;
 
-public record SemanticToken
+internal record SemanticToken
 {
     private SemanticToken()
     {
     }
 
-    public int Length { get; private set; }
-    public int TokenType { get; private set; }
-    public int TokenModifiers { get; private set; }
-    public int Line { get; private set; }
-    public int StartCharacter { get; private set; }
+    public uint Length { get; private set; }
+    public uint TokenType { get; private set; }
+    public uint TokenModifiers { get; private set; }
+    public uint Line { get; private set; }
+    public uint StartCharacter { get; private set; }
 
-    public static List<SemanticToken> Pares(IList<int> tokens, int startLineNumber = 1)
+    public static List<SemanticToken> Pares(IList<uint> tokens, uint startLineNumber = 1)
     {
         if (tokens.Count % 5 != 0)
             throw new AggregateException("Invalid tokens");

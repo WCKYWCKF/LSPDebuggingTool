@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using LSPDebuggingTool.Models;
-using LSPDebuggingTool.ViewModels;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 
@@ -28,7 +27,6 @@ namespace LSPDebuggingTool.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        public static string AppTitle { get; } = "LSP Debugging Tool (WIP)";
         [Reactive] private string? _ancillaryInfoFilePath;
 
         #region CanCommand
@@ -57,6 +55,8 @@ namespace LSPDebuggingTool.ViewModels
 
             _isAncillaryInfoLoadedHelper = _canSaveAncillaryInfo.ToProperty(this, nameof(IsAncillaryInfoLoaded));
         }
+
+        public static string AppTitle { get; } = "LSP Debugging Tool (WIP)";
 
         [ReactiveCommand(CanExecute = nameof(_canSaveAncillaryInfo))]
         private void SaveAncillaryInfo()

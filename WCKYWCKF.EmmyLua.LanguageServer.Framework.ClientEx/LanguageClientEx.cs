@@ -39,7 +39,7 @@ public static class LanguageClientEx
         return languageServer.Deserialize<InitializeResult>(resultJson);
     }
 
-    public static Task SendSendInitializedNotification(
+    public static Task SendInitializedNotification(
         this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer)
     {
         return languageServer.SendNotification(
@@ -65,6 +65,16 @@ public static class LanguageClientEx
         return languageServer.SendNotification(
             new NotificationMessage(
                 "textDocument/didChange",
+                languageServer.SerializeToDocument(@params)));
+    }
+
+    public static Task SendDidCloseTextDocumentNotification(
+        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
+        DidCloseTextDocumentParams @params)
+    {
+        return languageServer.SendNotification(
+            new NotificationMessage(
+                "textDocument/didClose",
                 languageServer.SerializeToDocument(@params)));
     }
 
@@ -121,5 +131,18 @@ public static class LanguageClientEx
             languageServer.SerializeToDocument(@params),
             new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
         return result is null ? null : languageServer.Deserialize<List<DocumentSymbol>>(result);
+    }
+
+    public static Task SendShutdownRequest(
+        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
+        TimeSpan timeOut)
+    {
+        return languageServer.SendRequest("shutdown", null, new CancellationTokenSource(timeOut).Token);
+    }
+
+    public static Task SendExitNotification(
+        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer)
+    {
+        return languageServer.SendNotification(new NotificationMessage("exit", null));
     }
 }

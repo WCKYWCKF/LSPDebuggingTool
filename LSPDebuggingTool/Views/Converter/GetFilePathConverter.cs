@@ -7,7 +7,7 @@ namespace LSPDebuggingTool.Views;
 
 public class GetFilePathConverter : IValueConverter
 {
-    public static GetFilePathConverter Instance { get; } = new GetFilePathConverter();
+    public static GetFilePathConverter Instance { get; } = new();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

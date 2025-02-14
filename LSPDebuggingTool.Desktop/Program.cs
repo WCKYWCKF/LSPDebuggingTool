@@ -1,34 +1,9 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Pipelines;
-using System.Reactive.Linq;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-// using Akavache;
 using Avalonia;
 using Avalonia.Dialogs;
-using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
-using AvaloniaEdit.Document;
-using AvaloniaEditLSPIntegration;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.TextDocumentClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.WorkspaceEditClientCapabilities;
-using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
-using EmmyLua.LanguageServer.Framework.Server;
-using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
+// using Akavache;
 
 namespace LSPDebuggingTool.Desktop;
 
@@ -121,7 +96,7 @@ internal sealed class Program
 //             InitializationOptions = JsonDocument.Parse("{}")
 //         };
 //         var serverC = languageServer.SendInitializeRequest(initializeParams, TimeSpan.FromSeconds(5)).Result;
-//         languageServer.SendSendInitializedNotification().Wait();
+//         languageServer.SendInitializedNotification().Wait();
 //         languageServer.SendDidOpenTextDocumentNotification(new DidOpenTextDocumentParams()
 //         {
 //             TextDocument = new TextDocumentItem()
@@ -176,7 +151,3 @@ internal sealed class Program
             .LogToTrace();
     }
 }
-
-[JsonSerializable(typeof(SemanticTokensDeltaParams))]
-[JsonSerializable(typeof(SemanticTokensDelta))]
-public partial class JsonProtocolContext : JsonSerializerContext;

@@ -1,3 +1,3 @@
 ﻿namespace AvaloniaEditLSPIntegration;
 
-public record SemanticTokensEdit(int Start, int DeleteCount, IList<int> Data);
+public record SemanticTokensEdit(uint Start, uint DeleteCount, IList<uint> Data);

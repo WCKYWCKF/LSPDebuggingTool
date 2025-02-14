@@ -10,15 +10,18 @@ namespace LSPDebuggingTool.ViewModels;
 
 public partial class TVEFileItem : TVEItemBase
 {
+    public static TextDocument NullDocument = new();
+    [Reactive] private bool _isOpened;
+
+    [Reactive] private bool _isSendDidOpenTextDocumentPVM;
+    [Reactive] private string? _languageId;
+    [Reactive] private string? _latestSemanticVersion;
+    [Reactive] private int _version;
+
     public TVEFileItem(FileInfo info) : base(info, x => (x as FileInfo)?.DirectoryName ?? string.Empty)
     {
         Content.Events().TextChanged.Subscribe(_ => Version++);
     }
-
-    [Reactive] private bool _isSendDidOpenTextDocumentPVM;
-    [Reactive] private bool _isOpened;
-    [Reactive] private string? _languageId;
-    [Reactive] private int _version = 0;
 
     public TextDocument Content
     {
@@ -32,7 +35,7 @@ public partial class TVEFileItem : TVEItemBase
         try
         {
             LanguageId = GetLanguageId();
-            Version++;
+            Version = 1;
             Content.Text = await File.ReadAllTextAsync(Path);
         }
         catch (Exception e)
@@ -40,7 +43,7 @@ public partial class TVEFileItem : TVEItemBase
             Content.Text = $"{e}";
         }
     }
-    
+
     private string GetLanguageId()
     {
         return Path switch
@@ -60,7 +63,8 @@ public partial class TVEFileItem : TVEItemBase
     [ReactiveCommand]
     private TVEFileItem Close()
     {
-        // IsSendDidOpenTextDocumentPVM = false;
+        Version = 1;
+        LatestSemanticVersion = null;
         return this;
     }
 }

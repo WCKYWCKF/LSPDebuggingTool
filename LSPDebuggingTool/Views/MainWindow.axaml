@@ -10,7 +10,7 @@
     xmlns:views="clr-namespace:LSPDebuggingTool.Views"
     xmlns:rxui="http://reactiveui.net"
     xmlns:micon="using:Material.Icons.Avalonia"
-    xmlns:aedit="using:AvaloniaEdit"
+    xmlns:lspedit="using:AvaloniaEditLSPIntegration"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="LSPDebuggingTool.Views.MainWindow"
     Icon="/Assets/Favicon/favicon.ico"
@@ -53,18 +53,13 @@
                                     HorizontalAlignment="Stretch" LabelAlignment="Left" LabelWidth="*">
                                     <ursa:FormGroup
                                         Header="启动参数">
-                                        <DockPanel ursa:FormItem.Label="LSP服务器可执行文件路径">
-                                            <Button
-                                                DockPanel.Dock="Right"
-                                                Content="使用文件选择器"
-                                                Margin="1,0,0,0"
-                                                Tag="{Binding LSPClientViewModel.FileName,Mode=TwoWay}"
-                                                Click="LaunchFilePicker" />
-                                            <TextBox
-                                                DockPanel.Dock="Left"
-                                                Text="{Binding LSPClientViewModel.FileName}"
-                                                HorizontalAlignment="Stretch" />
-                                        </DockPanel>
+                                        <ursa:PathPicker
+                                            ursa:FormItem.Label="LSP服务器可执行文件路径"
+                                            Title="使用文件选择器"
+                                            UsePickerType="OpenFile"
+                                            FileFilter="[可执行文件,*.exe]"
+                                            Margin="1,0,0,0"
+                                            SelectedPathsText="{Binding LSPClientViewModel.FileName,Mode=TwoWay}" />
                                         <ItemsRepeater
                                             DockPanel.Dock="Bottom"
                                             ItemsSource="{Binding LSPClientViewModel.Arguments}"
@@ -78,13 +73,6 @@
                                                             Command="{Binding LSPClientViewModel.AddArgumentCommand}" />
                                                 </StackPanel>
                                             </ursa:FormItem.Label>
-                                            <!-- <ItemsRepeater.Styles> -->
-                                            <!--     <Style Selector="DockPanel>Button"> -->
-                                            <!--         <Setter Property="Command" -->
-                                            <!--                 Value="{Binding LSPClientViewModel.RemoveArgumentCommand}"> -->
-                                            <!--         </Setter> -->
-                                            <!--     </Style> -->
-                                            <!-- </ItemsRepeater.Styles> -->
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate>
                                                     <DockPanel Margin="0,1,0,1">
@@ -157,12 +145,14 @@
                         <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Theme="{DynamicResource CardBorder}">
                             <TabControl>
                                 <TabItem Header="工作区解决方案查看器">
-                                    <TreeView ItemsSource="{Binding LSPClientViewModel.FileSystems.Items}">
+                                    <TreeView
+                                        x:Name="_fileSystemTreeView"
+                                        ItemsSource="{Binding LSPClientViewModel.FileSystems.Items}">
                                         <TreeView.DataTemplates>
                                             <DataTemplate DataType="vm:TVEFileItem">
                                                 <rxui:ReactiveUserControl x:TypeArguments="vm:TVEFileItem"
-                                                                          Initialized="Control_OnLoaded"
-                                                                          Background="Transparent">
+                                                                          Background="Transparent"
+                                                                          Initialized="StyledElement_OnInitialized">
                                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                                         <micon:MaterialIcon
                                                             Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
@@ -180,17 +170,7 @@
                                         </TreeView.DataTemplates>
                                     </TreeView>
                                 </TabItem>
-                                <TabItem Header="LSP Server请求日志">
-                                    <ScrollViewer Name="_requestLogItemsRepeater">
-                                        <ItemsRepeater ItemsSource="{Binding LSPClientViewModel.ViewRequestTasks}">
-                                            <ItemsRepeater.ItemTemplate>
-                                                <DataTemplate>
-                                                    <views:LSPResultViews Margin="0,1,0,1" />
-                                                </DataTemplate>
-                                            </ItemsRepeater.ItemTemplate>
-                                        </ItemsRepeater>
-                                    </ScrollViewer>
-                                </TabItem>
+                                <TabItem Header="LSP Server请求日志" />
                             </TabControl>
                         </Border>
                         <TabStrip Name="_openedTextFiles" Grid.Row="0" Grid.Column="1"
@@ -207,31 +187,26 @@
                                 </DataTemplate>
                             </TabStrip.ItemTemplate>
                         </TabStrip>
-                        <aedit:TextEditor x:Name="_lSPIntegratedTextEditor"
-                                          Grid.Row="1" Grid.Column="1"
-                                          ShowLineNumbers="True"
-                                          Document="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).Content}"
-                                          Tag="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem)}"
-                                          FontFamily="Cascadia Code,Consolas,Menlo,Monospace">
-                            <aedit:TextEditor.KeyBindings>
-                                <KeyBinding Gesture="Ctrl+S"
-                                            Command="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).SaveCommand}" />
-                            </aedit:TextEditor.KeyBindings>
-                        </aedit:TextEditor>
-                        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,*,8*" Margin="2">
-                            <TextBlock Grid.Column="0" Classes="Secondary" VerticalAlignment="Center"
-                                       Text="{Binding LSPClientViewModel.LocationInfo.Position.Line,StringFormat='行：{0}'}" />
-                            <TextBlock Grid.Column="1" Classes="Secondary" VerticalAlignment="Center"
-                                       Text="{Binding LSPClientViewModel.LocationInfo.Position.Character,StringFormat='列：{0}'}" />
-                            <TextBlock Grid.Column="2" Classes="Secondary" VerticalAlignment="Center"
-                                       Text="{Binding LSPClientViewModel.SelectedOpenedText.Path,StringFormat='当前活动的文件：{0}'}" />
-                        </Grid>
+                        <!-- <aedit:TextEditor x:Name="_lSPIntegratedTextEditor" -->
+                        <!--                   Grid.Row="1" Grid.Column="1" -->
+                        <!--                   ShowLineNumbers="True" -->
+                        <!--                   Document="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).Content}" -->
+                        <!--                   Tag="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem)}" -->
+                        <!--                   FontFamily="Cascadia Code,Consolas,Menlo,Monospace"> -->
+                        <!--     <aedit:TextEditor.KeyBindings> -->
+                        <!--         <KeyBinding Gesture="Ctrl+S" -->
+                        <!--                     Command="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).SaveCommand}" /> -->
+                        <!--     </aedit:TextEditor.KeyBindings> -->
+                        <!-- </aedit:TextEditor> -->
+                        <lspedit:LSPTextEditor
+                            x:Name="_lSPIntegratedTextEditor"
+                            IsEnabled="{Binding !!LSPClientViewModel.SelectedOpenedText}"
+                            Grid.Row="1" Grid.Column="1"
+                            ShowLineNumbers="True"
+                            Document="{Binding LSPClientViewModel.SelectedOpenedText.Content,FallbackValue={x:Static vm:TVEFileItem.NullDocument}}"
+                            FontFamily="Cascadia Code,Consolas,Menlo,Monospace" />
                     </Grid>
                 </TabStripItem.Tag>
-            </TabStripItem>
-            <TabStripItem>
-                <micon:MaterialIcon
-                    Kind="File" />
             </TabStripItem>
         </TabStrip>
         <TransitioningContentControl x:Name="_transitioningContentControl" Grid.Row="1"

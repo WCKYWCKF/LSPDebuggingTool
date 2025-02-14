@@ -15,6 +15,6 @@
         <TextBox Name="TextBox"
                  DockPanel.Dock="Left"
                  Text="{Binding $parent[views:PathPicker].SelectedPath}"
-                 HorizontalAlignment="Stretch"/>
+                 HorizontalAlignment="Stretch" />
     </DockPanel>
 </UserControl>
