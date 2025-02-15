@@ -8,56 +8,23 @@ namespace AvaloniaEditLSPIntegration;
 
 public class LSPSemanticHighlightingEngine : IHighlighter
 {
-    private readonly ConcurrentDictionary<uint, SemanticToken[]> _flushBuffer;
-    private readonly Mutex _highlightedLineFlushLock;
+    private readonly ConcurrentDictionary<uint, SemanticToken[]> _flushBuffer = new();
+    private readonly Mutex _highlightedLineFlushLock = new();
     private readonly Mutex _removeHighlightedLinesLock = new();
 
     private readonly ConcurrentDictionary<IDocumentLine, SemanticToken[]>
         _semanticTokenByLineCache = new();
 
-    private readonly List<uint> _semanticTokens;
-    private readonly CancellationTokenSource _updateSemanticHighlightingTask;
-    private readonly ConcurrentQueue<Action> _updateSemanticHighlightingTaskQueue;
+    private readonly List<uint> _semanticTokens = [];
 
     private Task? _removeHighlightedLinesTask;
     private ITextSourceVersion? _semanticTokensVersion;
-
-    public LSPSemanticHighlightingEngine()
-    {
-        _highlightedLineFlushLock = new Mutex();
-        _semanticTokens = [];
-        _flushBuffer = new ConcurrentDictionary<uint, SemanticToken[]>();
-        _updateSemanticHighlightingTaskQueue = new ConcurrentQueue<Action>();
-        _updateSemanticHighlightingTask = new CancellationTokenSource();
-        Task.Run(() =>
-        {
-            // try
-            // {
-            while (_updateSemanticHighlightingTask.IsCancellationRequested is false)
-            {
-                while (_updateSemanticHighlightingTaskQueue.TryDequeue(out var task))
-                {
-                    task.Invoke();
-                    TryFlushSemanticTokens();
-                }
-
-                Thread.Sleep(1);
-            }
-            // }
-            // catch (Exception e)
-            // {
-            //     Console.WriteLine(e);
-            //     throw;
-            // }
-        }, _updateSemanticHighlightingTask.Token);
-    }
+    public required ILinesTaskExecutor LinesTaskExecutor { get; set; }
 
     public Func<uint, uint, HighlightingColor>? GetColorByTypeAndModifiers { get; set; }
 
     void IDisposable.Dispose()
     {
-        _updateSemanticHighlightingTask.Cancel();
-        _updateSemanticHighlightingTask.Dispose();
     }
 
     public IEnumerable<HighlightingColor> GetColorStack(int lineNumber)
@@ -131,7 +98,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
 
     public void InitSemanticTokens(IList<uint> tokens, ITextSourceVersion version)
     {
-        _updateSemanticHighlightingTaskQueue.Enqueue(() =>
+        LinesTaskExecutor.Post(() =>
         {
             _semanticTokens.Clear();
             _semanticTokenByLineCache.Clear();
@@ -145,12 +112,11 @@ public class LSPSemanticHighlightingEngine : IHighlighter
         if (Document.Version.BelongsToSameDocumentAs(_semanticTokensVersion)
             && Document.Version.CompareAge(_semanticTokensVersion) == 0)
             foreach (var (lineNumber, semanticTokens) in _flushBuffer)
-            {
-                _semanticTokenByLineCache[Dispatcher.UIThread.Invoke(() => Document.GetLineByNumber((int)lineNumber))] =
-                    semanticTokens;
                 Dispatcher.UIThread.Post(() =>
-                    HighlightingStateChanged?.Invoke((int)lineNumber, (int)lineNumber));
-            }
+                {
+                    _semanticTokenByLineCache[Document.GetLineByNumber((int)lineNumber)] = semanticTokens;
+                    HighlightingStateChanged?.Invoke((int)lineNumber, (int)lineNumber);
+                });
 
         _highlightedLineFlushLock.ReleaseMutex();
         _flushBuffer.Clear();
@@ -158,7 +124,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
 
     public void UpdateSemanticTokens(IList<uint> deltaTokens, ITextSourceVersion version)
     {
-        _updateSemanticHighlightingTaskQueue.Enqueue(() =>
+        LinesTaskExecutor.Post(() =>
         {
             var startLineNumber = _semanticTokens.Count == 0 ? 1 : GetLineNumberByOffset((int)_semanticTokens[^1]);
             _semanticTokens.AddRange(deltaTokens);
@@ -187,6 +153,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
             //     Dispatcher.UIThread.Post(() => HighlightingStateChanged?.Invoke((int)item.Item1, (int)item.Item2));
             RemoveHighlightedLines();
             _semanticTokensVersion = version;
+            TryFlushSemanticTokens();
         });
     }
 
@@ -197,7 +164,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
 
     public void UpdateSemanticTokens(IList<SemanticTokensEdit> edits, ITextSourceVersion version)
     {
-        _updateSemanticHighlightingTaskQueue.Enqueue(() =>
+        LinesTaskExecutor.Post(() =>
         {
             foreach (var edit in edits)
             {
@@ -218,11 +185,16 @@ public class LSPSemanticHighlightingEngine : IHighlighter
 
             RemoveHighlightedLines();
             _semanticTokensVersion = version;
+            TryFlushSemanticTokens();
         });
     }
 
     private int GetLineNumberByOffset(int offset)
     {
+        //这种定位方式在行数或语义令牌非常多的时候性能非常低，有性能优化处理方向
+        //（将单次计算的耗时分摊到每一次语义令牌的更新中）
+        //（创建一个或多个游标来读取令牌，此方案在语义令牌非常多时或许有>=0.5的性能提升）
+        // todo 性能优化
         var line = 0;
         for (var i = 0; i < offset; i += 5) line += (int)_semanticTokens[i];
 
@@ -314,7 +286,7 @@ public class LSPSemanticHighlightingEngine : IHighlighter
     }
 }
 
-// 以下是部分或许有效的代码设计，暂时注释留待后续观察
+// 以下是部分或许有效的代码设计（在语义令牌中获取行号的性能优化初代设计思路），暂时注释留待后续观察
 // public interface ITextDocumentFile
 // {
 //     public TextDocument Document { get; }
