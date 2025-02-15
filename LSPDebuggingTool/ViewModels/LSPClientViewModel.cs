@@ -5,18 +5,21 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Animation;
 using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using DynamicData;
 using DynamicData.Binding;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.TextDocumentClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
@@ -81,10 +84,6 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         ViewOpenedTexts.ToObservableChangeSet()
             .MergeMany(x => x.CloseCommand)
             .InvokeCommand(CloseFileCommand);
-
-        DocumentContentChanged = DocumentContentChangedP;
-        SemanticTokensFull = SemanticTokensFullP;
-        SemanticTokensDelta = SemanticTokensDeltaP;
     }
 
     [JsonIgnore] public TextDocument LogText { get; }
@@ -97,12 +96,6 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
-
-    public Func<(IList<SemanticTokensEdit>?, IList<uint>?)> SemanticTokensDelta { get; }
-
-    public Action<DocumentChangeEventArgs> DocumentContentChanged { get; }
-
-    public Func<IList<uint>> SemanticTokensFull { get; }
 
     public void Dispose()
     {
@@ -189,7 +182,6 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
                 {
                     WorkspaceFolders = true
                 },
-                TextDocument = new TextDocumentClientCapabilities(),
                 Window = new WindowClientCapabilities
                 {
                     WorkDoneProgress = true
@@ -215,7 +207,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private (IList<SemanticTokensEdit>?, IList<uint>?) SemanticTokensDeltaP()
+    public (IList<SemanticTokensEdit>?, IList<uint>?) SemanticTokensDelta()
     {
         if (LSPServerIsRunning
             && LanguageClientForEdit is not null
@@ -243,7 +235,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         return (null, null);
     }
 
-    private void DocumentContentChangedP(DocumentChangeEventArgs obj)
+    public void DocumentContentChanged(DocumentChangeEventArgs obj)
     {
         if (LSPServerIsRunning
             && LanguageClientForEdit is not null
@@ -269,7 +261,22 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private IList<uint> SemanticTokensFullP()
+    public List<FoldingRange> FoldingRanges()
+    {
+        if (LSPServerIsRunning
+            && LanguageClientForEdit is not null
+            && SelectedOpenedText is not null)
+        {
+            return LanguageClientForEdit.SendFoldingRangeRequest(new FoldingRangeParams()
+            {
+                TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)))
+            }, TimeSpan.FromSeconds(2)).Result ?? [];
+        }
+
+        return [];
+    }
+
+    public IList<uint> SemanticTokensFull()
     {
         if (LSPServerIsRunning
             && LanguageClientForEdit is not null

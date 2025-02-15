@@ -2,6 +2,7 @@
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentLink;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
@@ -145,4 +146,17 @@ public static class LanguageClientEx
     {
         return languageServer.SendNotification(new NotificationMessage("exit", null));
     }
+
+    public static async Task<List<FoldingRange>?> SendFoldingRangeRequest(
+        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
+        FoldingRangeParams @params,
+        TimeSpan timeOut)
+    {
+        var result = await languageServer.SendRequest(
+            "textDocument/foldingRange",
+            languageServer.SerializeToDocument(@params),
+            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
+        return result is null ? null : languageServer.Deserialize<List<FoldingRange>>(result);
+    }
+    
 }

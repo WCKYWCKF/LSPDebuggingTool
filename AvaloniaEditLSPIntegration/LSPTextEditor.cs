@@ -1,5 +1,8 @@
 ﻿using Avalonia;
+using Avalonia.Interactivity;
 using AvaloniaEdit;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
 namespace AvaloniaEditLSPIntegration;
@@ -20,6 +23,8 @@ public class LSPTextEditor : TextEditor
             { Document = Document, LinesTaskExecutor = DefaultLinesTaskExecutor };
         TextArea.TextView.LineTransformers.Insert(0, new HighlightingColorizer(LSPSemanticHighlightingEngine));
     }
+
+    public LSPTextFoldingProvide LspTextFoldingProvider { get; private set; }
 
     public static ILinesTaskExecutor DefaultLinesTaskExecutor { get; } = ILinesTaskExecutor.Create();
 
@@ -44,13 +49,38 @@ public class LSPTextEditor : TextEditor
         if (LinesTaskExecutor != DefaultLinesTaskExecutor) return;
         LinesTaskExecutor = ILinesTaskExecutor.Create();
         LSPSemanticHighlightingEngine.LinesTaskExecutor = LinesTaskExecutor;
+        LspTextFoldingProvider.LinesTaskExecutor = LinesTaskExecutor;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         if (change.Property == DocumentProperty)
-            LSPSemanticHighlightingEngine.Document = Document;
+        {
+            if (LSPSemanticHighlightingEngine != null)
+            {
+                LSPSemanticHighlightingEngine.Document = Document;
+            }
+        }
+
 
         base.OnPropertyChanged(change);
+    }
+
+    protected override void OnDocumentChanged(DocumentChangedEventArgs e)
+    {
+        base.OnDocumentChanged(e);
+        if (LspTextFoldingProvider is not null)
+        {
+            LspTextFoldingProvider.FoldingManager.Clear();
+            FoldingManager.Uninstall(LspTextFoldingProvider.FoldingManager);
+            LspTextFoldingProvider.FoldingManager = FoldingManager.Install(TextArea);
+            LspTextFoldingProvider.Document = Document;
+        }
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        LspTextFoldingProvider = new LSPTextFoldingProvide(this) { LinesTaskExecutor = DefaultLinesTaskExecutor };
+        base.OnLoaded(e);
     }
 }

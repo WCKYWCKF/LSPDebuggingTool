@@ -46,12 +46,17 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
                 .Do(async x =>
                 {
                     x.Item1.Changing -= InitSemanticToekns;
-                    x.Item1.Changed -= UpdateSemanticTokens;
+                    x.Item1.Changed -= UpdateSemanticTokensAndCodeFolding;
                     x.Item2.Changing += InitSemanticToekns;
-                    x.Item2.Changed += UpdateSemanticTokens;
+                    x.Item2.Changed += UpdateSemanticTokensAndCodeFolding;
                     if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
-                        _lSPIntegratedTextEditor.LspSemanticHighlightingEngine.InitSemanticTokens(
-                            await Task.Run(() => lspClientViewModel.SemanticTokensFull.Invoke()), x.Item2.Version);
+                    {
+                        _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.InitSemanticTokens(
+                            await Task.Run(() => lspClientViewModel.SemanticTokensFull()), x.Item2.Version);
+                        var foldingRange = await Task.Run(() => lspClientViewModel.FoldingRanges());
+                        _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
+                            .Select(x => new FoldingRange((int)x.StartLine+1, (int)x.EndLine+1)).ToList());
+                    }
                 })
                 .Subscribe()
                 .DisposeWith(disposable);
@@ -61,20 +66,24 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
     private void InitSemanticToekns(object? sender, DocumentChangeEventArgs e)
     {
         if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
-            lspClientViewModel.DocumentContentChanged.Invoke(e);
+            lspClientViewModel.DocumentContentChanged(e);
     }
 
-    private async void UpdateSemanticTokens(object? sender, DocumentChangeEventArgs e)
+    private async void UpdateSemanticTokensAndCodeFolding(object? sender, DocumentChangeEventArgs e)
     {
         if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
         {
-            var result = await Task.Run(() => lspClientViewModel.SemanticTokensDelta.Invoke());
+            var result = await Task.Run(() => lspClientViewModel.SemanticTokensDelta());
             if (result.Item1 is not null)
-                _lSPIntegratedTextEditor.LspSemanticHighlightingEngine.UpdateSemanticTokens(result.Item1,
+                _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item1,
                     _lSPIntegratedTextEditor.Document.Version);
             if (result.Item2 is not null)
-                _lSPIntegratedTextEditor.LspSemanticHighlightingEngine.UpdateSemanticTokens(result.Item2,
+                _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item2,
                     _lSPIntegratedTextEditor.Document.Version);
+
+            var foldingRange = await Task.Run(() => lspClientViewModel.FoldingRanges());
+            _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
+                .Select(x => new FoldingRange((int)x.StartLine+1, (int)x.EndLine+1)).ToList());
         }
     }
 
@@ -85,7 +94,7 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
         {
             Foreground =
                 new SimpleHighlightingBrush(
-                    Color.FromRgb((byte)(arg1 * 5), (byte)(arg2 * 5), (byte)(arg1 * arg2 * 5)))
+                    Color.FromRgb((byte)(arg1 * 15), (byte)(arg2 * 10), (byte)((arg1 * arg2) * 5)))
         };
     }
 
