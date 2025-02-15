@@ -11,6 +11,9 @@
     xmlns:rxui="http://reactiveui.net"
     xmlns:micon="using:Material.Icons.Avalonia"
     xmlns:lspedit="using:AvaloniaEditLSPIntegration"
+    xmlns:search="using:AvaloniaEdit.Search"
+    xmlns:editing="using:AvaloniaEdit.Editing"
+    xmlns:folding="using:AvaloniaEdit.Folding"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="LSPDebuggingTool.Views.MainWindow"
     Icon="/Assets/Favicon/favicon.ico"
@@ -204,7 +207,29 @@
                             Grid.Row="1" Grid.Column="1"
                             ShowLineNumbers="True"
                             Document="{Binding LSPClientViewModel.SelectedOpenedText.Content,FallbackValue={x:Static vm:TVEFileItem.NullDocument}}"
-                            FontFamily="Cascadia Code,Consolas,Menlo,Monospace" />
+                            FontFamily="Cascadia Code,Consolas,Menlo,Monospace">
+                            <lspedit:LSPTextEditor.Styles>
+                                <Style Selector="folding|FoldingMargin">
+                                    <Setter Property="FoldingMarkerBrush" Value="{DynamicResource SemiColorText3}"></Setter>
+                                    <Setter Property="FoldingMarkerBackgroundBrush"
+                                            Value="{DynamicResource SemiColorBackground0}">
+                                    </Setter>
+                                    <Setter Property="SelectedFoldingMarkerBrush"
+                                            Value="{DynamicResource SemiColorText0}">
+                                    </Setter>
+                                    <Setter Property="SelectedFoldingMarkerBackgroundBrush"
+                                            Value="{DynamicResource SemiColorBackground4}">
+                                    </Setter>
+                                </Style>
+                                <Style Selector="search|SearchPanel">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderCardBorderBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource BorderCardBackground}" />
+                                </Style>
+                                <Style Selector="editing|TextArea">
+                                    <Setter Property="SelectionBrush" Value="{DynamicResource TextBoxSelectionBackground}" />
+                                </Style>
+                            </lspedit:LSPTextEditor.Styles>
+                        </lspedit:LSPTextEditor>
                     </Grid>
                 </TabStripItem.Tag>
             </TabStripItem>

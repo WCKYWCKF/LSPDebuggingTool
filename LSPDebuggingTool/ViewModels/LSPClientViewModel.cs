@@ -217,15 +217,15 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             {
                 TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path))),
                 PreviousResultId = SelectedOpenedText.LatestSemanticVersion!
-            }, TimeSpan.FromSeconds(2)).Result;
+            }, TimeSpan.FromSeconds(10)).Result;
             switch (result)
             {
                 case SemanticTokensDelta semanticTokensDelta:
                     SelectedOpenedText.LatestSemanticVersion = semanticTokensDelta.ResultId;
                     return (
-                        semanticTokensDelta.Edits
-                            .Select(x => new SemanticTokensEdit(x.Start, x.DeleteCount, x.Data ?? []))
-                            .ToList(), null);
+                        (semanticTokensDelta.Edits ?? [])
+                        .Select(x => new SemanticTokensEdit(x.Start, x.DeleteCount, x.Data ?? []))
+                        .ToList(), null);
                 case SemanticTokens semanticTokens:
                     SelectedOpenedText.LatestSemanticVersion = semanticTokens.ResultId;
                     return (null, semanticTokens.Data);
@@ -234,15 +234,13 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
 
         return (null, null);
     }
-
-    public void DocumentContentChanged(DocumentChangeEventArgs obj)
+    
+    public void DocumentContentChanged(TextLocation start,TextLocation end,int removalLength ,string insertedText)
     {
         if (LSPServerIsRunning
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            var start = SelectedOpenedText.Content.GetLocation(obj.Offset);
-            var end = SelectedOpenedText.Content.GetLocation(obj.Offset + obj.RemovalLength);
             LanguageClientForEdit.SendDidChangeTextDocumentNotification(new DidChangeTextDocumentParams
             {
                 TextDocument = new VersionedTextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)),
@@ -253,8 +251,8 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
                     {
                         Range = new DocumentRange(new Position(start.Line - 1, start.Column - 1),
                             new Position(end.Line - 1, end.Column - 1)),
-                        RangeLength = obj.RemovalLength,
-                        Text = obj.InsertedText.Text
+                        RangeLength = removalLength,
+                        Text = insertedText
                     }
                 ]
             }).Wait();

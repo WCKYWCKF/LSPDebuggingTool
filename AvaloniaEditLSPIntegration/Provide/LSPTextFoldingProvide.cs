@@ -1,8 +1,17 @@
-﻿using AvaloniaEdit;
+﻿using Avalonia.Threading;
+using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 
 namespace AvaloniaEditLSPIntegration;
+
+public class SSS : FoldingMargin
+{
+    protected override void OnTextViewVisualLinesChanged()
+    {
+        base.OnTextViewVisualLinesChanged();
+    }
+}
 
 public class LSPTextFoldingProvide
 {
@@ -15,9 +24,7 @@ public class LSPTextFoldingProvide
         var list = foldingRanges.Select(x => new NewFolding(Document.GetLineByNumber(x.StartLineNumber).Offset,
                 Document.GetLineByNumber(x.EndLineNumber).Offset))
             .OrderBy(x => x.StartOffset);
-        FoldingManager.UpdateFoldings(
-            list,
-            -1);
+        Dispatcher.UIThread.Post(() => FoldingManager.UpdateFoldings(list, -1));
     }
 
     public LSPTextFoldingProvide(TextEditor editor)
