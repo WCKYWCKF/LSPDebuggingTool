@@ -11,4 +11,19 @@
       <ProjectReference Include="..\LanguageServer.Framework\LanguageServer.Framework\LanguageServer.Framework.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="LanguageClientEx.T4.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>LanguageClientEx.T4.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="LanguageClientEx.T4.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

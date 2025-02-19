@@ -1,162 +1,216 @@
 ﻿using System.Text.Json;
+using EmmyLua.LanguageServer.Framework;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentLink;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
 
 namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
 
-public static class LanguageClientEx
+public static partial class LanguageClientEx
 {
-    public static JsonDocument SerializeToDocument(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
+    private static Task<JsonDocument?> SendRequest(
+        this LSPCommunicationBase lspCommunication,
+        string method,
+        JsonDocument? document, TimeSpan timeOut)
+    {
+        using var cts = new CancellationTokenSource(timeOut);
+        return lspCommunication.SendRequest(method, document, cts.Token);
+    }
+
+    private static JsonDocument SerializeToDocument(
+        this LSPCommunicationBase lspCommunication,
         object @params)
     {
-        return JsonSerializer.SerializeToDocument(@params, languageServer.JsonSerializerOptions);
+        return JsonSerializer.SerializeToDocument(@params, lspCommunication.JsonSerializerOptions);
     }
 
-    public static TResult? Deserialize<TResult>(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        JsonDocument result)
+    private static Task<JsonDocument> SerializeToDocumentAsync(
+        this LSPCommunicationBase lspCommunication,
+        object @params)
     {
-        return result.Deserialize<TResult>(languageServer.JsonSerializerOptions);
+        return Task.Run(() => lspCommunication.SerializeToDocument(@params));
     }
 
-    public static async Task<InitializeResult?> SendInitializeRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        InitializeParams @params,
-        TimeSpan timeOut)
+    private static Task<TResult?> DeserializeAsync<TResult>(
+        this LSPCommunicationBase lspCommunication,
+        JsonDocument? result)
     {
-        var resultJson = await languageServer.SendRequest(
-            "initialize",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
-
-        if (resultJson is null)
-            throw new NullReferenceException(nameof(resultJson));
-        return languageServer.Deserialize<InitializeResult>(resultJson);
+        return result is null
+            ? Task.FromResult(default(TResult))
+            : Task.Run(() => result.Deserialize<TResult>(lspCommunication.JsonSerializerOptions));
     }
 
-    public static Task SendInitializedNotification(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer)
-    {
-        return languageServer.SendNotification(
-            new NotificationMessage(
-                "initialized",
-                languageServer.SerializeToDocument(new InitializedParams())));
-    }
-
-    public static Task SendDidOpenTextDocumentNotification(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        DidOpenTextDocumentParams @params)
-    {
-        return languageServer.SendNotification(
-            new NotificationMessage(
-                "textDocument/didOpen",
-                languageServer.SerializeToDocument(@params)));
-    }
-
-    public static Task SendDidChangeTextDocumentNotification(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        DidChangeTextDocumentParams @params)
-    {
-        return languageServer.SendNotification(
-            new NotificationMessage(
-                "textDocument/didChange",
-                languageServer.SerializeToDocument(@params)));
-    }
-
-    public static Task SendDidCloseTextDocumentNotification(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        DidCloseTextDocumentParams @params)
-    {
-        return languageServer.SendNotification(
-            new NotificationMessage(
-                "textDocument/didClose",
-                languageServer.SerializeToDocument(@params)));
-    }
-
-    public static async Task<SemanticTokens?> SendSemanticTokensForFullRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        SemanticTokensParams @params,
-        TimeSpan timeOut)
-    {
-        var result = await languageServer.SendRequest(
-            "textDocument/semanticTokens/full",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
-        return result is null ? null : languageServer.Deserialize<SemanticTokens>(result);
-    }
-
-    public static async Task<object?> SendSemanticTokensForDeltaRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
+    public static async Task<SemanticTokensDeltaOrSemanticTokens?> SemanticTokensForDeltaRequest(
+        this LSPCommunicationBase lspCommunication,
         SemanticTokensDeltaParams @params,
         TimeSpan timeOut)
     {
-        var result = await languageServer.SendRequest(
-            "textDocument/semanticTokens/full/delta",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
+        var result = await lspCommunication.SendRequest(
+            LSPDefaultMethod.textDocument_semanticTokens_full_delta,
+            await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+            timeOut).ConfigureAwait(false);
+
+        if (result is null) return null;
+
         try
         {
-            return result is null ? null : languageServer.Deserialize<SemanticTokensDelta>(result);
+            return new SemanticTokensDeltaOrSemanticTokens(
+                await lspCommunication.DeserializeAsync<SemanticTokensDelta>(result),
+                null);
         }
         catch
         {
-            return result is null ? null : languageServer.Deserialize<SemanticTokens>(result);
+            return new SemanticTokensDeltaOrSemanticTokens(
+                null,
+                await lspCommunication.DeserializeAsync<SemanticTokens>(result));
         }
     }
 
-    public static async Task<List<DocumentLink>?> SendDocumentLinkRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        DocumentLinkParams @params,
+    public static Task ShutdownRequest(
+        this LSPCommunicationBase lspCommunication,
         TimeSpan timeOut)
     {
-        var result = await languageServer.SendRequest(
-            "textDocument/documentLink",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
-        return result is null ? null : languageServer.Deserialize<List<DocumentLink>>(result);
+        return lspCommunication.SendRequest(LSPDefaultMethod.shutdown, null, timeOut);
     }
 
-    public static async Task<List<DocumentSymbol>?> SendDocumentSymbolRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        DocumentSymbolParams @params,
-        TimeSpan timeOut)
+    public static Task ExitNotification(
+        this LSPCommunicationBase lspCommunication)
     {
-        var result = await languageServer.SendRequest(
-            "textDocument/documentSymbol",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
-        return result is null ? null : languageServer.Deserialize<List<DocumentSymbol>>(result);
+        return lspCommunication.SendNotification(new NotificationMessage(LSPDefaultMethod.exit, null));
     }
 
-    public static Task SendShutdownRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        TimeSpan timeOut)
-    {
-        return languageServer.SendRequest("shutdown", null, new CancellationTokenSource(timeOut).Token);
-    }
-
-    public static Task SendExitNotification(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer)
-    {
-        return languageServer.SendNotification(new NotificationMessage("exit", null));
-    }
-
-    public static async Task<List<FoldingRange>?> SendFoldingRangeRequest(
-        this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer,
-        FoldingRangeParams @params,
-        TimeSpan timeOut)
-    {
-        var result = await languageServer.SendRequest(
-            "textDocument/foldingRange",
-            languageServer.SerializeToDocument(@params),
-            new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
-        return result is null ? null : languageServer.Deserialize<List<FoldingRange>>(result);
-    }
-    
+    // public static async Task<InitializeResult?> InitializeRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     InitializeParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.initialize,
+    //         await lspCommunication.SerializeToDocumentAsync(@params),
+    //         timeOut).ConfigureAwait(false);
+    //     return await lspCommunication.DeserializeAsync<InitializeResult>(result).ConfigureAwait(false);
+    // }
+    //
+    // public static async Task InitializedNotification(
+    //     this LSPCommunicationBase lspCommunication,
+    //     InitializeParams @params)
+    // {
+    //     await lspCommunication.SendNotification(
+    //         new NotificationMessage(
+    //             LSPDefaultMethod.initialized,
+    //             await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)));
+    // }
+    //
+    // public static async Task DidOpenTextDocumentNotification(
+    //     this LSPCommunicationBase lspCommunication,
+    //     DidOpenTextDocumentParams @params)
+    // {
+    //     await lspCommunication.SendNotification(
+    //         new NotificationMessage(
+    //             LSPDefaultMethod.textDocument_didOpen,
+    //             await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)));
+    // }
+    //
+    // public static async Task DidChangeTextDocumentNotification(
+    //     this LSPCommunicationBase lspCommunication,
+    //     DidChangeTextDocumentParams @params)
+    // {
+    //     await lspCommunication.SendNotification(
+    //         new NotificationMessage(
+    //             LSPDefaultMethod.textDocument_didChange,
+    //             await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)));
+    // }
+    //
+    // public static async Task DidCloseTextDocumentNotification(
+    //     this LSPCommunicationBase lspCommunication,
+    //     DidCloseTextDocumentParams @params)
+    // {
+    //     await lspCommunication.SendNotification(
+    //         new NotificationMessage(
+    //             LSPDefaultMethod.textDocument_didClose,
+    //             await lspCommunication.SerializeToDocumentAsync(@params))).ConfigureAwait(false);
+    // }
+    //
+    // public static async Task<SemanticTokens?> SemanticTokensForFullRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     SemanticTokensParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.textDocument_semanticTokens_full,
+    //         await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+    //         timeOut).ConfigureAwait(false);
+    //     return await lspCommunication.DeserializeAsync<SemanticTokens?>(result).ConfigureAwait(false);
+    // }
+    //
+    // public static async Task<SemanticTokensDeltaOrSemanticTokens?> SemanticTokensForDeltaRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     SemanticTokensDeltaParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.textDocument_semanticTokens_full_delta,
+    //         await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+    //         timeOut).ConfigureAwait(false);
+    //     if (result is null)
+    //         return null;
+    //     try
+    //     {
+    //         return new SemanticTokensDeltaOrSemanticTokens(
+    //             await lspCommunication.DeserializeAsync<SemanticTokensDelta>(result).ConfigureAwait(false), null);
+    //     }
+    //     catch
+    //     {
+    //         return new SemanticTokensDeltaOrSemanticTokens(null,
+    //             await lspCommunication.DeserializeAsync<SemanticTokens>(result).ConfigureAwait(false));
+    //     }
+    // }
+    //
+    // public static async Task<List<DocumentLink>?> DocumentLinkRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     DocumentLinkParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.textDocument_documentLink,
+    //         await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+    //         timeOut).ConfigureAwait(false);
+    //     return await lspCommunication.DeserializeAsync<List<DocumentLink>>(result).ConfigureAwait(false);
+    // }
+    //
+    // public static async Task<List<DocumentSymbol>?> DocumentSymbolRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     DocumentSymbolParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.textDocument_documentSymbol,
+    //         await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+    //         timeOut).ConfigureAwait(false);
+    //     return await lspCommunication.DeserializeAsync<List<DocumentSymbol>>(result).ConfigureAwait(false);
+    // }
+    //
+    // public static Task ShutdownRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     TimeSpan timeOut)
+    // {
+    //     return lspCommunication.SendRequest(LSPDefaultMethod.shutdown, null, timeOut);
+    // }
+    //
+    // public static Task ExitNotification(
+    //     this global::EmmyLua.LanguageServer.Framework.Server.LanguageServer languageServer)
+    // {
+    //     return languageServer.SendNotification(new NotificationMessage(LSPDefaultMethod.exit, null));
+    // }
+    //
+    // public static async Task<List<FoldingRange>?> FoldingRangeRequest(
+    //     this LSPCommunicationBase lspCommunication,
+    //     FoldingRangeParams @params,
+    //     TimeSpan timeOut)
+    // {
+    //     var result = await lspCommunication.SendRequest(
+    //         LSPDefaultMethod.textDocument_foldingRange,
+    //         await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+    //         new CancellationTokenSource(timeOut).Token).ConfigureAwait(false);
+    //     return await lspCommunication.DeserializeAsync<List<FoldingRange>>(result).ConfigureAwait(false);
+    // }
 }

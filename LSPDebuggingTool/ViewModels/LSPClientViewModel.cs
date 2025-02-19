@@ -55,7 +55,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
 
     private PipeReader? _serverOutputReader;
     private StreamReader? _serverRunLogReader;
-    public LanguageServer? LanguageClientForEdit;
+    public LanguageClient? LanguageClientForEdit;
 
     public LSPClientViewModel()
     {
@@ -107,7 +107,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     private async Task OpenFileAsync(TVEFileItem item)
     {
         await item.OpenCommand.Execute();
-        await LanguageClientForEdit!.SendDidOpenTextDocumentNotification(new DidOpenTextDocumentParams
+        await LanguageClientForEdit!.DidOpenTextDocumentNotification(new DidOpenTextDocumentParams
         {
             TextDocument = new TextDocumentItem
             {
@@ -125,7 +125,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     {
         ViewOpenedTexts.Remove(item);
         // await item.CloseCommand.Execute();
-        return LanguageClientForEdit!.SendDidCloseTextDocumentNotification(new DidCloseTextDocumentParams
+        return LanguageClientForEdit!.DidCloseTextDocumentNotification(new DidCloseTextDocumentParams
         {
             TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(item.Path)))
         });
@@ -153,14 +153,14 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
         _serverRunLogReader = new StreamReader(_lSPServerProcess.StandardError.BaseStream);
 
         LanguageClientForEdit =
-            LanguageServer.From(_lSPServerProcess.StandardOutput.BaseStream, _serverInputWriter.AsStream());
+            new LanguageClient(_lSPServerProcess.StandardOutput.BaseStream, _serverInputWriter.AsStream());
         LanguageClientForEdit.AddJsonSerializeContext(JsonProtocolContext.Default);
-        Task.Run(LanguageClientForEdit.Run);
+        LanguageClientForEdit.Run();
         // Task.Run(LanguageClientForEdit.Run);
         LogText.Text = string.Empty;
         _cancellationTokenSourceForLogReaderTask = new CancellationTokenSource();
         Task.Run(LogReaderTask);
-        var serverC = await LanguageClientForEdit.SendInitializeRequest(new InitializeParams
+        var serverC = await LanguageClientForEdit.InitializeRequest(new InitializeParams
         {
             ProcessId = null,
             ClientInfo = new ClientInfo
@@ -191,7 +191,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             },
             InitializationOptions = JsonDocument.Parse("{}")
         }, TimeSpan.FromSeconds(2));
-        await LanguageClientForEdit.SendInitializedNotification();
+        await LanguageClientForEdit.InitializedNotification(new InitializedParams());
     }
 
     private async Task LogReaderTask()
@@ -202,8 +202,10 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             var result = await _serverRunLogReader.ReadLineAsync(_cancellationTokenSourceForLogReaderTask.Token);
             var str = result;
             // string str = Encoding.UTF8.GetString(result.Buffer);
+            if (string.IsNullOrWhiteSpace(str))
+                continue;
             Console.WriteLine(str);
-            await Dispatcher.UIThread.InvokeAsync(() => LogText.Insert(LogText.TextLength, str));
+            await Dispatcher.UIThread.InvokeAsync(() => LogText.Insert(LogText.TextLength, str ?? string.Empty));
         }
     }
 
@@ -213,37 +215,40 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            var result = LanguageClientForEdit.SendSemanticTokensForDeltaRequest(new SemanticTokensDeltaParams
+            var result = LanguageClientForEdit.SemanticTokensForDeltaRequest(new SemanticTokensDeltaParams
             {
                 TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path))),
                 PreviousResultId = SelectedOpenedText.LatestSemanticVersion!
             }, TimeSpan.FromSeconds(10)).Result;
-            switch (result)
+            if (result?.TokensDelta is not null)
             {
-                case SemanticTokensDelta semanticTokensDelta:
-                    SelectedOpenedText.LatestSemanticVersion = semanticTokensDelta.ResultId;
-                    return (
-                        (semanticTokensDelta.Edits ?? [])
-                        .Select(x => new SemanticTokensEdit(x.Start, x.DeleteCount, x.Data ?? []))
-                        .ToList(), null);
-                case SemanticTokens semanticTokens:
-                    SelectedOpenedText.LatestSemanticVersion = semanticTokens.ResultId;
-                    return (null, semanticTokens.Data);
+                SelectedOpenedText.LatestSemanticVersion = result.TokensDelta.ResultId;
+                return (
+                    (result.TokensDelta.Edits ?? [])
+                    .Select(x => new SemanticTokensEdit(x.Start, x.DeleteCount, x.Data ?? []))
+                    .ToList(), null);
+            }
+
+            if (result?.Tokens is not null)
+            {
+                SelectedOpenedText.LatestSemanticVersion = result.Tokens.ResultId;
+                return (null, result.Tokens.Data);
             }
         }
 
         return (null, null);
     }
-    
-    public void DocumentContentChanged(TextLocation start,TextLocation end,int removalLength ,string insertedText)
+
+    public void DocumentContentChanged(TextLocation start, TextLocation end, int removalLength, string insertedText)
     {
         if (LSPServerIsRunning
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            LanguageClientForEdit.SendDidChangeTextDocumentNotification(new DidChangeTextDocumentParams
+            LanguageClientForEdit.DidChangeTextDocumentNotification(new DidChangeTextDocumentParams
             {
-                TextDocument = new VersionedTextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)),
+                TextDocument = new VersionedTextDocumentIdentifier(
+                    new DocumentUri(new Uri(SelectedOpenedText.Path)),
                     SelectedOpenedText.Version),
                 ContentChanges =
                 [
@@ -265,7 +270,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            return LanguageClientForEdit.SendFoldingRangeRequest(new FoldingRangeParams()
+            return LanguageClientForEdit.FoldingRangeRequest(new FoldingRangeParams()
             {
                 TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)))
             }, TimeSpan.FromSeconds(2)).Result ?? [];
@@ -280,7 +285,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            var result = Task.Run(async () => await LanguageClientForEdit.SendSemanticTokensForFullRequest(
+            var result = Task.Run(async () => await LanguageClientForEdit.SemanticTokensForFullRequest(
                 new SemanticTokensParams
                 {
                     TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)))
@@ -296,8 +301,9 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     [ReactiveCommand(CanExecute = nameof(_canCloseLSPServer))]
     private void CloseLSPServer()
     {
-        LanguageClientForEdit?.SendShutdownRequest(TimeSpan.FromSeconds(2)).Wait();
-        LanguageClientForEdit?.SendExitNotification();
+        LanguageClientForEdit?.ShutdownRequest(TimeSpan.FromSeconds(2)).Wait();
+        LanguageClientForEdit?.ExitNotification();
+        LanguageClientForEdit?.Exit();
         LSPServerIsRunning = false;
         _cancellationTokenSourceForLogReaderTask?.Cancel();
         _cancellationTokenSourceForLogReaderTask?.Dispose();
@@ -321,7 +327,8 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
     [ReactiveCommand]
     private void ArgumentEditCompleteCheck(string argument)
     {
-        if (string.IsNullOrEmpty(argument)) Arguments.RemoveMany(Arguments.Where(x => string.IsNullOrEmpty(x.Text)));
+        if (string.IsNullOrEmpty(argument))
+            Arguments.RemoveMany(Arguments.Where(x => string.IsNullOrEmpty(x.Text)));
     }
 
     #region ProcessStartInfo

@@ -1,0 +1,130 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using EmmyLua.LanguageServer.Framework;
+using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentLink;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Initialize;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
+
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
+
+public static partial class LanguageClientEx
+{
+    // Auto-generated common methods
+    <#
+    var standardRequests = new[]
+    {
+        new
+        {
+            Method = "InitializeRequest",
+            ResultType = "InitializeResult?",
+            ParamsType = "InitializeParams",
+            LspMethod = "initialize"
+        },
+        new
+        {
+            Method = "SemanticTokensForFullRequest",
+            ResultType = "SemanticTokens?",
+            ParamsType = "SemanticTokensParams",
+            LspMethod = "textDocument_semanticTokens_full"
+        },
+        new
+        {
+            Method = "DocumentLinkRequest",
+            ResultType = "List<DocumentLink>?",
+            ParamsType = "DocumentLinkParams",
+            LspMethod = "textDocument_documentLink"
+        },
+        new
+        {
+            Method = "DocumentSymbolRequest",
+            ResultType = "List<DocumentSymbol>?",
+            ParamsType = "DocumentSymbolParams",
+            LspMethod = "textDocument_documentSymbol"
+        },
+        new
+        {
+            Method = "FoldingRangeRequest",
+            ResultType = "List<FoldingRange>?",
+            ParamsType = "FoldingRangeParams",
+            LspMethod = "textDocument_foldingRange"
+        }
+    };
+
+    var standardNotifications = new[]
+    {
+        new
+        {
+            Method = "InitializedNotification",
+            ParamsType = "InitializedParams",
+            LspMethod = "initialized"
+        },
+        new
+        {
+            Method = "DidOpenTextDocumentNotification",
+            ParamsType = "DidOpenTextDocumentParams",
+            LspMethod = "textDocument_didOpen"
+        },
+        new
+        {
+            Method = "DidChangeTextDocumentNotification",
+            ParamsType = "DidChangeTextDocumentParams",
+            LspMethod = "textDocument_didChange"
+        },
+        new
+        {
+            Method = "DidCloseTextDocumentNotification",
+            ParamsType = "DidCloseTextDocumentParams",
+            LspMethod = "textDocument_didClose"
+        }
+    };
+#>
+
+    // Auto-generated request methods
+    <#
+    foreach (var req in standardRequests)
+    {
+#>
+    public static async Task<<#= req.ResultType #>> <#= req.Method #>(
+        this LSPCommunicationBase lspCommunication,
+        <#= req.ParamsType #> @params,
+        TimeSpan timeOut)
+    {
+        var result = await lspCommunication.SendRequest(
+            LSPDefaultMethod.<#= req.LspMethod #>,
+            await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
+            timeOut).ConfigureAwait(false);
+        return await lspCommunication.DeserializeAsync<<#= req.ResultType #>>(result).ConfigureAwait(false);
+    }
+    <#
+    }
+#>
+
+    // Auto-generated notification methods
+    <#
+    foreach (var notif in standardNotifications)
+    {
+#>
+    public static async Task <#= notif.Method #>(
+        this LSPCommunicationBase lspCommunication,
+        <#= notif.ParamsType #> @params)
+    {
+        await lspCommunication.SendNotification(
+            new NotificationMessage(
+                LSPDefaultMethod.<#= notif.LspMethod #>,
+                await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)));
+    }
+    <#
+    }
+#>
+
+}

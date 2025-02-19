@@ -277,18 +277,3 @@ public sealed class GetIconForTVEItemBase : IValueConverter
         throw new NotImplementedException();
     }
 }
-
-public sealed class TextToDocumentHB : IValueConverter
-{
-    public static TextToDocumentHB Instance = new();
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        return value is not string text ? new TextDocument() : new TextDocument(text);
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        return value is TextDocument document ? document.Text : string.Empty;
-    }
-}
