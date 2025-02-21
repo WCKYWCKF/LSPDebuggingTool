@@ -16,6 +16,10 @@
         <Generator>TextTemplatingFileGenerator</Generator>
         <LastGenOutput>LanguageClientEx.T4.cs</LastGenOutput>
       </None>
+      <None Update="LSPDefaultMethod.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>LSPDefaultMethod.cs</LastGenOutput>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -23,6 +27,9 @@
         <AutoGen>True</AutoGen>
         <DesignTime>True</DesignTime>
         <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
+      </Compile>
+      <Compile Update="LSPDefaultMethod.cs">
+        <DependentUpon>LSPDefaultMethod.tt</DependentUpon>
       </Compile>
     </ItemGroup>
 
