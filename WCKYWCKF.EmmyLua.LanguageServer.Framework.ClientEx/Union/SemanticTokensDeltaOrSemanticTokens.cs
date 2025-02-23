@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 
-namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Union;
 
 [JsonConverter(typeof(SemanticTokensDeltaOrSemanticTokensJsonConverter))]
 public sealed record SemanticTokensDeltaOrSemanticTokens
@@ -28,7 +28,6 @@ public class SemanticTokensDeltaOrSemanticTokensJsonConverter : JsonConverter<Se
     public override void Write(Utf8JsonWriter writer, SemanticTokensDeltaOrSemanticTokens value,
         JsonSerializerOptions options)
     {
-        throw new NotSupportedException(
-            "SemanticTokensDeltaOrSemanticTokensJsonConverter is not supported.It only use Deserialize.");
+        throw new NotSupportedException("It only use Deserialize.");
     }
 }

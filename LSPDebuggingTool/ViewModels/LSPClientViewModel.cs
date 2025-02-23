@@ -215,7 +215,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            var result = LanguageClientForEdit.SemanticTokensForDeltaRequest(new SemanticTokensDeltaParams
+            var result = LanguageClientForEdit.SemanticTokensForDeltaFileRequest(new SemanticTokensDeltaParams
             {
                 TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path))),
                 PreviousResultId = SelectedOpenedText.LatestSemanticVersion!
@@ -285,7 +285,7 @@ public partial class LSPClientViewModel : ViewModelBase, IDisposable
             && LanguageClientForEdit is not null
             && SelectedOpenedText is not null)
         {
-            var result = Task.Run(async () => await LanguageClientForEdit.SemanticTokensForFullRequest(
+            var result = Task.Run(async () => await LanguageClientForEdit.SemanticTokensForFullFileRequest(
                 new SemanticTokensParams
                 {
                     TextDocument = new TextDocumentIdentifier(new DocumentUri(new Uri(SelectedOpenedText.Path)))

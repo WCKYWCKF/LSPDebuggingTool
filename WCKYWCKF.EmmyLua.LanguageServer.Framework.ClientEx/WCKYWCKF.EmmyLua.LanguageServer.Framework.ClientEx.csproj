@@ -23,13 +23,18 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Update="LSPDefaultMethod.cs">
+        <DependentUpon>LSPDefaultMethod.tt</DependentUpon>
+      </Compile>
       <Compile Update="LanguageClientEx.T4.cs">
         <AutoGen>True</AutoGen>
         <DesignTime>True</DesignTime>
         <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
       </Compile>
-      <Compile Update="LSPDefaultMethod.cs">
-        <DependentUpon>LSPDefaultMethod.tt</DependentUpon>
+      <Compile Update="LanguageClientEx.T4.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
       </Compile>
     </ItemGroup>
 

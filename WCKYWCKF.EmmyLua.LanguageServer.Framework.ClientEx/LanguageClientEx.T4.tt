@@ -1,8 +1,10 @@
 <#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
+<#@ assembly name="Microsoft.CSharp" #>
 <#@ output extension=".cs" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
 using EmmyLua.LanguageServer.Framework;
-using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
 using EmmyLua.LanguageServer.Framework.Protocol.JsonRpc;
 using EmmyLua.LanguageServer.Framework.Protocol.Message;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.CallHierarchy;
@@ -49,6 +51,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceWatchedFile;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Union;
 
 namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
 
@@ -56,639 +59,832 @@ public static partial class LanguageClientEx
 {
     // Auto-generated common methods (LSP 3.17 compliant)
 <#
-    var standardRequests = new[]
+    var list = new[]
     {
-        // 生命周期
         new
         {
             Method = "InitializeRequest",
             ResultType = "InitializeResult",
             ParamsType = "InitializeParams",
-            LspMethod = "initialize"
-        },
-        new { Method = "ShutdownRequest", ResultType = "object", ParamsType = "object", LspMethod = "shutdown" },
-
-        // 文档同步
-        new
+            LspMethod = "initialize",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "WillSaveWaitUntilRequest",
-            ResultType = "TextEdit[]",
+            Method = "InitializedNotification",
+            ResultType = "",
+            ParamsType = "InitializedParams",
+            LspMethod = "initialized",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "RegisterCapabilityRequest",
+            ResultType = "",
+            ParamsType = "RegistrationParams",
+            LspMethod = "client_registerCapability",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "UnregisterCapabilityRequest",
+            ResultType = "",
+            ParamsType = "UnregistrationParams",
+            LspMethod = "client_unregisterCapability",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "SetTraceNotification",
+            ResultType = "",
+            ParamsType = "SetTraceParams",
+            LspMethod = "setTrace",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "LogTraceNotification",
+            ResultType = "",
+            ParamsType = "LogTraceParams",
+            LspMethod = "logTrace",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "ShutdownRequest",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "shutdown",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "ExitNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "exit",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DidOpenTextDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidOpenTextDocumentParams",
+            LspMethod = "textDocument_didOpen",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DidChangeTextDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidChangeTextDocumentParams",
+            LspMethod = "textDocument_didChange",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "WillSaveTextDocumentNotification",
+            ResultType = "",
             ParamsType = "WillSaveTextDocumentParams",
-            LspMethod = "textDocument_willSaveWaitUntil"
-        },
-
-        // 语言功能
-        new
+            LspMethod = "textDocument_willSave",
+            IsRequest = false
+        }
+        , new
         {
-            Method = "CompletionRequest",
-            ResultType = "CompletionList",
-            ParamsType = "CompletionParams",
-            LspMethod = "textDocument_completion"
-        },
-        new
+            Method = "WillSaveWaitUntilTextDocumentRequest",
+            ResultType = "List<TextEdit>",
+            ParamsType = "WillSaveTextDocumentParams",
+            LspMethod = "textDocument_willSaveWaitUntil",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "HoverRequest",
-            ResultType = "Hover",
-            ParamsType = "HoverParams",
-            LspMethod = "textDocument_hover"
-        },
-        new
+            Method = "DidSaveTextDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidSaveTextDocumentParams",
+            LspMethod = "textDocument_didSave",
+            IsRequest = false
+        }
+        , new
         {
-            Method = "SignatureHelpRequest",
-            ResultType = "SignatureHelp",
-            ParamsType = "SignatureHelpParams",
-            LspMethod = "textDocument_signatureHelp"
-        },
-        new
+            Method = "DidCloseTextDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidCloseTextDocumentParams",
+            LspMethod = "textDocument_didClose",
+            IsRequest = false
+        }
+        , new
         {
-            Method = "DeclarationRequest",
-            ResultType = "Location[]",
+            Method = "DidOpenNotebookDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidOpenNotebookDocumentParams",
+            LspMethod = "notebookDocument_didOpen",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DidChangeNotebookDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidChangeNotebookDocumentParams",
+            LspMethod = "notebookDocument_didChange",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DidSaveNotebookDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidSaveNotebookDocumentParams",
+            LspMethod = "notebookDocument_didSave",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DidCloseNotebookDocumentNotification",
+            ResultType = "",
+            ParamsType = "DidCloseNotebookDocumentParams",
+            LspMethod = "notebookDocument_didClose",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "GotoDeclarationRequest",
+            ResultType = "LocationOrLocationListOrLocationLinkList",
             ParamsType = "DeclarationParams",
-            LspMethod = "textDocument_declaration"
-        },
-        new
+            LspMethod = "textDocument_declaration",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "DefinitionRequest",
-            ResultType = "Location[]",
+            Method = "GotoDefinitionRequest",
+            ResultType = "LocationOrLocationListOrLocationLinkList",
             ParamsType = "DefinitionParams",
-            LspMethod = "textDocument_definition"
-        },
-        new
+            LspMethod = "textDocument_definition",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "TypeDefinitionRequest",
-            ResultType = "Location[]",
+            Method = "GotoTypeDefinitionRequest",
+            ResultType = "LocationOrLocationListOrLocationLinkList",
             ParamsType = "TypeDefinitionParams",
-            LspMethod = "textDocument_typeDefinition"
-        },
-        new
+            LspMethod = "textDocument_typeDefinition",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ImplementationRequest",
-            ResultType = "Location[]",
+            Method = "GotoImplementationRequest",
+            ResultType = "LocationOrLocationListOrLocationLinkList",
             ParamsType = "ImplementationParams",
-            LspMethod = "textDocument_implementation"
-        },
-        new
+            LspMethod = "textDocument_implementation",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ReferencesRequest",
-            ResultType = "Location[]",
+            Method = "FindReferencesRequest",
+            ResultType = "List<Location>",
             ParamsType = "ReferenceParams",
-            LspMethod = "textDocument_references"
-        },
-        new
-        {
-            Method = "DocumentHighlightRequest",
-            ResultType = "DocumentHighlight[]",
-            ParamsType = "DocumentHighlightParams",
-            LspMethod = "textDocument_documentHighlight"
-        },
-        new
-        {
-            Method = "DocumentSymbolRequest",
-            ResultType = "List<DocumentSymbol>",
-            ParamsType = "DocumentSymbolParams",
-            LspMethod = "textDocument_documentSymbol"
-        },
-        new
-        {
-            Method = "CodeActionRequest",
-            ResultType = "List<CodeAction>",
-            ParamsType = "CodeActionParams",
-            LspMethod = "textDocument_codeAction"
-        },
-        new
-        {
-            Method = "CodeLensRequest",
-            ResultType = "List<CodeLens>",
-            ParamsType = "CodeLensParams",
-            LspMethod = "textDocument_codeLens"
-        },
-        new
-        {
-            Method = "DocumentLinkRequest",
-            ResultType = "List<DocumentLink>",
-            ParamsType = "DocumentLinkParams",
-            LspMethod = "textDocument_documentLink"
-        },
-        new
-        {
-            Method = "RenameRequest",
-            ResultType = "WorkspaceEdit",
-            ParamsType = "RenameParams",
-            LspMethod = "textDocument_rename"
-        },
-        new
-        {
-            Method = "PrepareRenameRequest",
-            ResultType = "Range",
-            ParamsType = "PrepareRenameParams",
-            LspMethod = "textDocument_prepareRename"
-        },
-        new
-        {
-            Method = "FoldingRangeRequest",
-            ResultType = "List<FoldingRange>",
-            ParamsType = "FoldingRangeParams",
-            LspMethod = "textDocument_foldingRange"
-        },
-        new
-        {
-            Method = "SelectionRangeRequest",
-            ResultType = "List<SelectionRange>",
-            ParamsType = "SelectionRangeParams",
-            LspMethod = "textDocument_selectionRange"
-        },
-        new
-        {
-            Method = "LinkedEditingRangeRequest",
-            ResultType = "LinkedEditingRanges",
-            ParamsType = "LinkedEditingRangeParams",
-            LspMethod = "textDocument_linkedEditingRange"
-        },
-        new
-        {
-            Method = "InlineCompletionRequest",
-            ResultType = "InlineCompletionList",
-            ParamsType = "InlineCompletionParams",
-            LspMethod = "textDocument_inlineCompletion"
-        },
-        new
-        {
-            Method = "InlineValueRequest",
-            ResultType = "List<InlineValue>",
-            ParamsType = "InlineValueParams",
-            LspMethod = "textDocument_inlineValue"
-        },
-        new
-        {
-            Method = "MonikerRequest",
-            ResultType = "List<Moniker>",
-            ParamsType = "MonikerParams",
-            LspMethod = "textDocument_moniker"
-        },
-        new
+            LspMethod = "textDocument_references",
+            IsRequest = true
+        }
+        , new
         {
             Method = "PrepareCallHierarchyRequest",
             ResultType = "List<CallHierarchyItem>",
             ParamsType = "CallHierarchyPrepareParams",
-            LspMethod = "textDocument_prepareCallHierarchy"
-        },
-        new
+            LspMethod = "textDocument_prepareCallHierarchy",
+            IsRequest = true
+        }
+        , new
         {
             Method = "CallHierarchyIncomingCallsRequest",
             ResultType = "List<CallHierarchyIncomingCall>",
             ParamsType = "CallHierarchyIncomingCallsParams",
-            LspMethod = "callHierarchy_incomingCalls"
-        },
-        new
+            LspMethod = "callHierarchy_incomingCalls",
+            IsRequest = true
+        }
+        , new
         {
             Method = "CallHierarchyOutgoingCallsRequest",
             ResultType = "List<CallHierarchyOutgoingCall>",
             ParamsType = "CallHierarchyOutgoingCallsParams",
-            LspMethod = "callHierarchy_outgoingCalls"
-        },
-        new
+            LspMethod = "callHierarchy_outgoingCalls",
+            IsRequest = true
+        }
+        , new
         {
             Method = "PrepareTypeHierarchyRequest",
             ResultType = "List<TypeHierarchyItem>",
             ParamsType = "TypeHierarchyPrepareParams",
-            LspMethod = "textDocument_prepareTypeHierarchy"
-        },
-        new
+            LspMethod = "textDocument_prepareTypeHierarchy",
+            IsRequest = true
+        }
+        , new
         {
             Method = "TypeHierarchySupertypesRequest",
             ResultType = "List<TypeHierarchyItem>",
             ParamsType = "TypeHierarchySupertypesParams",
-            LspMethod = "typeHierarchy_supertypes"
-        },
-        new
+            LspMethod = "typeHierarchy_supertypes",
+            IsRequest = true
+        }
+        , new
         {
             Method = "TypeHierarchySubtypesRequest",
             ResultType = "List<TypeHierarchyItem>",
             ParamsType = "TypeHierarchySubtypesParams",
-            LspMethod = "typeHierarchy_subtypes"
-        },
-        new
+            LspMethod = "typeHierarchy_subtypes",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DocumentHighlightsRequest",
+            ResultType = "List<DocumentHighlight>",
+            ParamsType = "DocumentHighlightParams",
+            LspMethod = "textDocument_documentHighlight",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DocumentLinkRequest",
+            ResultType = "List<DocumentLink>",
+            ParamsType = "DocumentLinkParams",
+            LspMethod = "textDocument_documentLink",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DocumentLinkResolveRequest",
+            ResultType = "DocumentLink",
+            ParamsType = "DocumentLink",
+            LspMethod = "documentLink_resolve",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "HoverRequest",
+            ResultType = "Hover",
+            ParamsType = "HoverParams",
+            LspMethod = "textDocument_hover",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CodeLensRequest",
+            ResultType = "List<CodeLens>",
+            ParamsType = "CodeLensParams",
+            LspMethod = "textDocument_codeLens",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CodeLensResolveRequest",
+            ResultType = "CodeLens",
+            ParamsType = "CodeLens",
+            LspMethod = "codeLens_resolve",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CodeLensRefreshRequestNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_codeLens_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "FoldingRangeRequest",
+            ResultType = "List<FoldingRange>",
+            ParamsType = "FoldingRangeParams",
+            LspMethod = "textDocument_foldingRange",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "FoldingRangeRefreshRequestNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_foldingRange_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "SelectionRangeRequest",
+            ResultType = "List<SelectionRange>",
+            ParamsType = "SelectionRangeParams",
+            LspMethod = "textDocument_selectionRange",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DocumentSymbolsRequest",
+            ResultType = "DocumentSymbolListOrSymbolInformationList",
+            ParamsType = "DocumentSymbolParams",
+            LspMethod = "textDocument_documentSymbol",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "SemanticTokensForFullFileRequest",
+            ResultType = "SemanticTokens",
+            ParamsType = "SemanticTokensParams",
+            LspMethod = "textDocument_semanticTokens_full",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "SemanticTokensForDeltaFileRequest",
+            ResultType = "SemanticTokensOrSemanticTokensDelta",
+            ParamsType = "SemanticTokensDeltaParams",
+            LspMethod = "textDocument_semanticTokens_full_delta",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "SemanticTokensForRangeFileRequest",
+            ResultType = "SemanticTokens",
+            ParamsType = "SemanticTokensRangeParams",
+            LspMethod = "textDocument_semanticTokens_range",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "SemanticTokensForRefreshFileNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_semanticTokens_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "InlayHintRequest",
+            ResultType = "List<InlayHint>",
+            ParamsType = "InlayHintParams",
+            LspMethod = "textDocument_inlayHint",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "InlayHintResolveRequest",
+            ResultType = "InlayHint",
+            ParamsType = "InlayHint",
+            LspMethod = "inlayHint_resolve",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "InlayHintRefreshRequestNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_inlayHint_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "InlineValueRequest",
+            ResultType = "List<InlineValue>",
+            ParamsType = "InlineValueParams",
+            LspMethod = "textDocument_inlineValue",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "InlineValueRefreshRequestNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_inlineValue_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "MonikersRequest",
+            ResultType = "List<Moniker>",
+            ParamsType = "MonikerParams",
+            LspMethod = "textDocument_moniker",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CompletionRequest",
+            ResultType = "CompletionItemListOrCompletionList",
+            ParamsType = "CompletionParams",
+            LspMethod = "textDocument_completion",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CompletionItemResolveRequest",
+            ResultType = "CompletionItem",
+            ParamsType = "CompletionItem",
+            LspMethod = "completionItem_resolve",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "PublishDiagnosticsNotification",
+            ResultType = "",
+            ParamsType = "PublishDiagnosticsParams",
+            LspMethod = "textDocument_publishDiagnostics",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "DocumentDiagnosticsRequest",
+            ResultType = "DocumentDiagnosticReport",
+            ParamsType = "DocumentDiagnosticParams",
+            LspMethod = "textDocument_diagnostic",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "WorkspaceDiagnosticsRequest",
+            ResultType = "WorkspaceDiagnosticReport",
+            ParamsType = "WorkspaceDiagnosticParams",
+            LspMethod = "workspace_diagnostic",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DiagnosticsRefreshNotification",
+            ResultType = "",
+            ParamsType = "none",
+            LspMethod = "workspace_diagnostic_refresh",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "SignatureHelpRequest",
+            ResultType = "SignatureHelp",
+            ParamsType = "SignatureHelpParams",
+            LspMethod = "textDocument_signatureHelp",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CodeActionRequest",
+            ResultType = "List<CommandOrCodeAction>",
+            ParamsType = "CodeActionParams",
+            LspMethod = "textDocument_codeAction",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "CodeActionResolveRequest",
+            ResultType = "CodeAction",
+            ParamsType = "CodeAction",
+            LspMethod = "codeAction_resolve",
+            IsRequest = true
+        }
+        , new
         {
             Method = "DocumentColorRequest",
             ResultType = "List<ColorInformation>",
             ParamsType = "DocumentColorParams",
-            LspMethod = "textDocument_documentColor"
-        },
-        new
+            LspMethod = "textDocument_documentColor",
+            IsRequest = true
+        }
+        , new
         {
             Method = "ColorPresentationRequest",
             ResultType = "List<ColorPresentation>",
             ParamsType = "ColorPresentationParams",
-            LspMethod = "textDocument_colorPresentation"
-        },
-        new
+            LspMethod = "textDocument_colorPresentation",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "FormattingRequest",
+            Method = "DocumentFormattingRequest",
             ResultType = "List<TextEdit>",
             ParamsType = "DocumentFormattingParams",
-            LspMethod = "textDocument_formatting"
-        },
-        new
+            LspMethod = "textDocument_formatting",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "RangeFormattingRequest",
+            Method = "DocumentRangeFormattingRequest",
             ResultType = "List<TextEdit>",
             ParamsType = "DocumentRangeFormattingParams",
-            LspMethod = "textDocument_rangeFormatting"
-        },
-        new
+            LspMethod = "textDocument_rangeFormatting",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "OnTypeFormattingRequest",
+            Method = "DocumentonTypeFormattingRequest",
             ResultType = "List<TextEdit>",
             ParamsType = "DocumentOnTypeFormattingParams",
-            LspMethod = "textDocument_onTypeFormatting"
-        },
-        new
+            LspMethod = "textDocument_onTypeFormatting",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ResolveCompletionItemRequest",
-            ResultType = "CompletionItem",
-            ParamsType = "CompletionItem",
-            LspMethod = "completionItem_resolve"
-        },
-        new
+            Method = "RenameRequest",
+            ResultType = "WorkspaceEdit",
+            ParamsType = "RenameParams",
+            LspMethod = "textDocument_rename",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ResolveCodeLensRequest",
-            ResultType = "CodeLens",
-            ParamsType = "CodeLens",
-            LspMethod = "codeLens_resolve"
-        },
-        new
+            Method = "PrepareRenameRequest",
+            ResultType = "RangeOrPrepareRenameResult",
+            ParamsType = "PrepareRenameParams",
+            LspMethod = "textDocument_prepareRename",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ResolveDocumentLinkRequest",
-            ResultType = "DocumentLink",
-            ParamsType = "DocumentLink",
-            LspMethod = "documentLink_resolve"
-        },
-        new
+            Method = "LinkedEditingRangeRequest",
+            ResultType = "LinkedEditingRanges",
+            ParamsType = "LinkedEditingRangeParams",
+            LspMethod = "textDocument_linkedEditingRange",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ResolveCodeActionRequest",
-            ResultType = "CodeAction",
-            ParamsType = "CodeAction",
-            LspMethod = "codeAction_resolve"
-        },
-        new
+            Method = "InlineCompletionRequest",
+            ResultType = "InlineCompletionItemListOrInlineCompletionList",
+            ParamsType = "InlineCompletionParams",
+            LspMethod = "textDocument_inlineCompletion",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ResolveWorkspaceSymbolRequest",
-            ResultType = "SymbolInformation",
-            ParamsType = "WorkspaceSymbol",
-            LspMethod = "workspaceSymbol_resolve"
-        },
-        new
-        {
-            Method = "ResolveInlayHintRequest",
-            ResultType = "InlayHint",
-            ParamsType = "InlayHint",
-            LspMethod = "inlayHint_resolve"
-        },
-
-        // 语义令牌
-        new
-        {
-            Method = "SemanticTokensForFullRequest",
-            ResultType = "SemanticTokens",
-            ParamsType = "SemanticTokensParams",
-            LspMethod = "textDocument_semanticTokens_full"
-        },
-        new
-        {
-            Method = "SemanticTokensForDeltaRequest",
-            ResultType = "SemanticTokensDeltaOrSemanticTokens",
-            ParamsType = "SemanticTokensDeltaParams",
-            LspMethod = "textDocument_semanticTokens_full_delta"
-        },
-        new
-        {
-            Method = "SemanticTokensRangeRequest",
-            ResultType = "SemanticTokens",
-            ParamsType = "SemanticTokensRangeParams",
-            LspMethod = "textDocument_semanticTokens_range"
-        },
-
-        // 诊断
-        new
-        {
-            Method = "WorkspaceDiagnosticRequest",
-            ResultType = "WorkspaceDiagnosticReport",
-            ParamsType = "WorkspaceDiagnosticParams",
-            LspMethod = "workspace_diagnostic"
-        },
-        new
-        {
-            Method = "DocumentDiagnosticRequest",
-            ResultType = "DocumentDiagnosticReport",
-            ParamsType = "DocumentDiagnosticParams",
-            LspMethod = "textDocument_diagnostic"
-        },
-
-        // 工作区操作
-        new
-        {
-            Method = "WorkspaceSymbolRequest",
-            ResultType = "List<SymbolInformation>",
+            Method = "WorkspaceSymbolsRequest",
+            ResultType = "SymbolInformationListOrWorkspaceSymbolList",
             ParamsType = "WorkspaceSymbolParams",
-            LspMethod = "workspace_symbol"
-        },
-        new
+            LspMethod = "workspace_symbol",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ExecuteCommandRequest",
-            ResultType = "object",
-            ParamsType = "ExecuteCommandParams",
-            LspMethod = "workspace_executeCommand"
-        },
-        new
+            Method = "WorkspaceSymbolResolveRequest",
+            ResultType = "WorkspaceSymbol",
+            ParamsType = "WorkspaceSymbol",
+            LspMethod = "workspaceSymbol_resolve",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ApplyEditRequest",
-            ResultType = "ApplyWorkspaceEditResponse",
-            ParamsType = "ApplyWorkspaceEditParams",
-            LspMethod = "workspace_applyEdit"
-        },
-        new
+            Method = "ConfigurationRequest",
+            ResultType = "List<LSPAny>",
+            ParamsType = "ConfigurationParams",
+            LspMethod = "workspace_configuration",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DidChangeConfigurationNotification",
+            ResultType = "",
+            ParamsType = "DidChangeConfigurationParams",
+            LspMethod = "workspace_didChangeConfiguration",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "WorkspaceFoldersRequest",
+            ResultType = "List<WorkspaceFolder>",
+            ParamsType = "none",
+            LspMethod = "workspace_workspaceFolders",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DidChangeWorkspaceFoldersNotification",
+            ResultType = "",
+            ParamsType = "DidChangeWorkspaceFoldersParams",
+            LspMethod = "workspace_didChangeWorkspaceFolders",
+            IsRequest = false
+        }
+        , new
         {
             Method = "WillCreateFilesRequest",
             ResultType = "WorkspaceEdit",
             ParamsType = "CreateFilesParams",
-            LspMethod = "workspace_willCreateFiles"
-        },
-        new
+            LspMethod = "workspace_willCreateFiles",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DidCreateFilesNotification",
+            ResultType = "",
+            ParamsType = "CreateFilesParams",
+            LspMethod = "workspace_didCreateFiles",
+            IsRequest = false
+        }
+        , new
         {
             Method = "WillRenameFilesRequest",
             ResultType = "WorkspaceEdit",
             ParamsType = "RenameFilesParams",
-            LspMethod = "workspace_willRenameFiles"
-        },
-        new
+            LspMethod = "workspace_willRenameFiles",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "DidRenameFilesNotification",
+            ResultType = "",
+            ParamsType = "RenameFilesParams",
+            LspMethod = "workspace_didRenameFiles",
+            IsRequest = false
+        }
+        , new
         {
             Method = "WillDeleteFilesRequest",
             ResultType = "WorkspaceEdit",
             ParamsType = "DeleteFilesParams",
-            LspMethod = "workspace_willDeleteFiles"
-        },
-        new
+            LspMethod = "workspace_willDeleteFiles",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ConfigurationRequest",
-            ResultType = "object[]",
-            ParamsType = "ConfigurationParams",
-            LspMethod = "workspace_configuration"
-        },
-        new
+            Method = "DidDeleteFilesNotification",
+            ResultType = "",
+            ParamsType = "DeleteFilesParams",
+            LspMethod = "workspace_didDeleteFiles",
+            IsRequest = false
+        }
+        , new
         {
-            Method = "WorkspaceFoldersRequest",
-            ResultType = "List<WorkspaceFolder>",
-            ParamsType = "object",
-            LspMethod = "workspace_workspaceFolders"
-        },
-        new
+            Method = "DidChangeWatchedFilesNotification",
+            ResultType = "",
+            ParamsType = "DidChangeWatchedFilesParams",
+            LspMethod = "workspace_didChangeWatchedFiles",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "ExecuteacommandRequest",
+            ResultType = "LSPAny",
+            ParamsType = "ExecuteCommandParams",
+            LspMethod = "workspace_executeCommand",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "AppliesaWorkspaceEditRequest",
+            ResultType = "ApplyWorkspaceEditResult",
+            ParamsType = "ApplyWorkspaceEditParams",
+            LspMethod = "workspace_applyEdit",
+            IsRequest = true
+        }
+        , new
         {
             Method = "TextDocumentContentRequest",
             ResultType = "TextDocumentContentResult",
             ParamsType = "TextDocumentContentParams",
-            LspMethod = "workspace_textDocumentContent"
-        },
-
-        // 窗口相关
-        new
+            LspMethod = "workspace_textDocumentContent",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "ShowMessageRequestRequest",
+            Method = "TextDocumentContentRefreshRequest",
+            ResultType = "",
+            ParamsType = "TextDocumentContentRefreshParams",
+            LspMethod = "workspace_textDocumentContent_refresh",
+            IsRequest = true
+        }
+        , new
+        {
+            Method = "ShowMessageNotification",
+            ResultType = "",
+            ParamsType = "ShowMessageParams",
+            LspMethod = "window_showMessage",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "ShowMessageRequest",
             ResultType = "MessageActionItem",
             ParamsType = "ShowMessageRequestParams",
-            LspMethod = "window_showMessageRequest"
-        },
-        new
-        {
-            Method = "WorkDoneCreateRequest",
-            ResultType = "object",
-            ParamsType = "WorkDoneProgressCreateParams",
-            LspMethod = "window_workDoneProgress_create"
+            LspMethod = "window_showMessageRequest",
+            IsRequest = true
         }
-    };
-
-    var standardNotifications = new[]
-    {
-        // 生命周期
-        new { Method = "InitializedNotification", ParamsType = "InitializedParams", LspMethod = "initialized" },
-        new { Method = "ExitNotification", ParamsType = "object", LspMethod = "exit" },
-
-        // 文档同步
-        new
+        , new
         {
-            Method = "DidOpenTextDocumentNotification",
-            ParamsType = "DidOpenTextDocumentParams",
-            LspMethod = "textDocument_didOpen"
-        },
-        new
-        {
-            Method = "DidChangeTextDocumentNotification",
-            ParamsType = "DidChangeTextDocumentParams",
-            LspMethod = "textDocument_didChange"
-        },
-        new
-        {
-            Method = "DidSaveTextDocumentNotification",
-            ParamsType = "DidSaveTextDocumentParams",
-            LspMethod = "textDocument_didSave"
-        },
-        new
-        {
-            Method = "DidCloseTextDocumentNotification",
-            ParamsType = "DidCloseTextDocumentParams",
-            LspMethod = "textDocument_didClose"
-        },
-        new
-        {
-            Method = "WillSaveTextDocumentNotification",
-            ParamsType = "WillSaveTextDocumentParams",
-            LspMethod = "textDocument_willSave"
-        },
-
-        // Notebook文档
-        new
-        {
-            Method = "DidOpenNotebookDocumentNotification",
-            ParamsType = "DidOpenNotebookDocumentParams",
-            LspMethod = "notebookDocument_didOpen"
-        },
-        new
-        {
-            Method = "DidChangeNotebookDocumentNotification",
-            ParamsType = "DidChangeNotebookDocumentParams",
-            LspMethod = "notebookDocument_didChange"
-        },
-        new
-        {
-            Method = "DidSaveNotebookDocumentNotification",
-            ParamsType = "DidSaveNotebookDocumentParams",
-            LspMethod = "notebookDocument_didSave"
-        },
-        new
-        {
-            Method = "DidCloseNotebookDocumentNotification",
-            ParamsType = "DidCloseNotebookDocumentParams",
-            LspMethod = "notebookDocument_didClose"
-        },
-
-        // 工作区事件
-        new
-        {
-            Method = "DidChangeConfigurationNotification",
-            ParamsType = "DidChangeConfigurationParams",
-            LspMethod = "workspace_didChangeConfiguration"
-        },
-        new
-        {
-            Method = "DidChangeWatchedFilesNotification",
-            ParamsType = "DidChangeWatchedFilesParams",
-            LspMethod = "workspace_didChangeWatchedFiles"
-        },
-        new
-        {
-            Method = "DidCreateFilesNotification",
-            ParamsType = "CreateFilesParams",
-            LspMethod = "workspace_didCreateFiles"
-        },
-        new
-        {
-            Method = "DidRenameFilesNotification",
-            ParamsType = "RenameFilesParams",
-            LspMethod = "workspace_didRenameFiles"
-        },
-        new
-        {
-            Method = "DidDeleteFilesNotification",
-            ParamsType = "DeleteFilesParams",
-            LspMethod = "workspace_didDeleteFiles"
-        },
-        new
-        {
-            Method = "DidChangeWorkspaceFoldersNotification",
-            ParamsType = "DidChangeWorkspaceFoldersParams",
-            LspMethod = "workspace_didChangeWorkspaceFolders"
-        },
-
-        // 窗口消息
-        new { Method = "ShowMessageNotification", ParamsType = "ShowMessageParams", LspMethod = "window_showMessage" },
-        new { Method = "LogMessageNotification", ParamsType = "LogMessageParams", LspMethod = "window_logMessage" },
-        new
-        {
-            Method = "ShowDocumentNotification",
+            Method = "ShowDocumentRequest",
+            ResultType = "ShowDocumentResult",
             ParamsType = "ShowDocumentParams",
-            LspMethod = "window_showDocument"
-        },
-        new { Method = "TelemetryEventNotification", ParamsType = "object", LspMethod = "telemetry_event" },
-        new
+            LspMethod = "window_showDocument",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "PublishDiagnosticsNotification",
-            ParamsType = "PublishDiagnosticsParams",
-            LspMethod = "textDocument_publishDiagnostics"
-        },
-
-        // 进度跟踪
-        new { Method = "ProgressNotification", ParamsType = "ProgressParams", LspMethod = "progress" },
-        new { Method = "LogTraceNotification", ParamsType = "LogTraceParams", LspMethod = "logTrace" },
-        new { Method = "SetTraceNotification", ParamsType = "SetTraceParams", LspMethod = "setTrace" },
-
-        // 能力注册
-        new
+            Method = "LogMessageNotification",
+            ResultType = "",
+            ParamsType = "LogMessageParams",
+            LspMethod = "window_logMessage",
+            IsRequest = false
+        }
+        , new
         {
-            Method = "RegisterCapabilityNotification",
-            ParamsType = "RegistrationParams",
-            LspMethod = "client_registerCapability"
-        },
-        new
+            Method = "CreateWorkDoneProgressRequest",
+            ResultType = "",
+            ParamsType = "WorkDoneProgressCreateParams",
+            LspMethod = "window_workDoneProgress_create",
+            IsRequest = true
+        }
+        , new
         {
-            Method = "UnregisterCapabilityNotification",
-            ParamsType = "UnregistrationParams",
-            LspMethod = "client_unregisterCapability"
-        },
-
-        // 刷新请求
-        new { Method = "CodeLensRefreshNotification", ParamsType = "object", LspMethod = "workspace_codeLens_refresh" },
-        new
-        {
-            Method = "FoldingRangeRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_foldingRange_refresh"
-        },
-        new
-        {
-            Method = "SemanticTokensRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_semanticTokens_refresh"
-        },
-        new
-        {
-            Method = "InlineHintRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_inlayHint_refresh"
-        },
-        new
-        {
-            Method = "InlineValueRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_inlineValue_refresh"
-        },
-        new
-        {
-            Method = "DiagnosticRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_diagnostic_refresh"
-        },
-        new
-        {
-            Method = "TextDocumentContentRefreshNotification",
-            ParamsType = "object",
-            LspMethod = "workspace_textDocumentContent_refresh"
-        },
-        new
-        {
-            Method = "WorkDoneCancelNotification",
+            Method = "CancelaWorkDoneProgressNotification",
+            ResultType = "",
             ParamsType = "WorkDoneProgressCancelParams",
-            LspMethod = "window_workDoneProgress_cancel"
+            LspMethod = "window_workDoneProgress_cancel",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "TelemetryNotification",
+            ResultType = "",
+            ParamsType = "(object,Array)",
+            LspMethod = "telemetry_event",
+            IsRequest = false
+        }
+        , new
+        {
+            Method = "ProgressSupportNotification",
+            ResultType = "",
+            ParamsType = "ProgressParams",
+            LspMethod = "progress",
+            IsRequest = false
         }
     };
-
-    var count = standardNotifications.Length + standardRequests.Length;
 #>
-
     // Auto-generated request methods
-    <#
-    foreach (var req in standardRequests)
+<#
+    foreach (var m in list.Where(x => x.IsRequest))
     {
+        var hasParams = m.ParamsType != "none";
 #>
-    public static async Task<<#= req.ResultType #>?> <#= req.Method #>(
-        this LSPCommunicationBase lspCommunication,
-        <#= req.ParamsType #> @params,
-        TimeSpan timeOut)
-    {
-        var result = await lspCommunication.SendRequest(
-            LSPDefaultMethod.<#= req.LspMethod #>,
-            await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false),
-            timeOut).ConfigureAwait(false);
-        return await lspCommunication.DeserializeAsync<<#= req.ResultType #>>(result).ConfigureAwait(false);
-    }
-    <#
+        public static <#= GetMethodSignature(m) #>
+        {
+<#
+        if (string.IsNullOrEmpty(m.ResultType))
+        {
+#>
+            await lspCommunication.SendRequest(
+                LSPDefaultMethod.<#= m.LspMethod #>,
+                <#=
+                    hasParams
+                        ? "await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)"
+                        : "null" #>,
+                timeOut).ConfigureAwait(false);
+<#
+        }
+        else
+        {
+#>
+            var result = await lspCommunication.SendRequest(
+                LSPDefaultMethod.<#= m.LspMethod #>,
+                <#=
+                    hasParams
+                        ? "await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)"
+                        : "null" #>,
+                timeOut).ConfigureAwait(false);
+
+            return await lspCommunication.DeserializeAsync<<#= m.ResultType #>>(result)
+                .ConfigureAwait(false);
+<#
+        }
+#>
+        }
+<#
     }
 #>
 
     // Auto-generated notification methods
-    <#
-    foreach (var notif in standardNotifications)
+<#
+    foreach (var notif in list.Where(x => !x.IsRequest))
     {
+        var hasParams = notif.ParamsType != "none";
 #>
     public static async Task <#= notif.Method #>(
-        this LSPCommunicationBase lspCommunication,
-        <#= notif.ParamsType #> @params)
+        this LSPCommunicationBase lspCommunication<#=
+                hasParams ? $",\n        {notif.ParamsType} @params" : "" #>)
     {
         await lspCommunication.SendNotification(
             new NotificationMessage(
                 LSPDefaultMethod.<#= notif.LspMethod #>,
-                await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)));
+                <#=
+                hasParams ? "await lspCommunication.SerializeToDocumentAsync(@params).ConfigureAwait(false)" : "null" #>));
     }
-    <#
+<#
     }
 #>
-
 }
+
+<#+
+    private string GetMethodSignature(dynamic method)
+    {
+        var isAsync = !string.IsNullOrEmpty(method.ResultType);
+        var returnType = isAsync
+            ? $"async Task<{method.ResultType}?>"
+            : "async Task";
+
+        var parameters = new List<string>();
+        if (method.ParamsType != "none")
+            parameters.Add($"{method.ParamsType} @params");
+        parameters.Add("TimeSpan timeOut)");
+
+        return $"{returnType} {method.Method}(\n" +
+               $"        this LSPCommunicationBase lspCommunication,\n" +
+               $"        {string.Join(",\n        ", parameters)}";
+    }
+#>

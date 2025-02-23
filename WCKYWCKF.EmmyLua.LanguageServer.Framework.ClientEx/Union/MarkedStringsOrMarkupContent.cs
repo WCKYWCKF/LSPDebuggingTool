@@ -2,8 +2,9 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
+using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
 
-namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Union;
 
 [JsonConverter(typeof(MarkedStringsOrMarkupContentJsonConverter))]
 public record MarkedStringsOrMarkupContent
@@ -57,10 +58,6 @@ public class MarkedStringsOrMarkupContentJsonConverter : JsonConverter<MarkedStr
 
     public override void Write(Utf8JsonWriter writer, MarkedStringsOrMarkupContent value, JsonSerializerOptions options)
     {
-        if (value.MarkupContent is not null)
-            writer.WriteRawValue(JsonSerializer.Serialize(value.MarkupContent, options));
-        else if (value.MarkedStrings is not null)
-            writer.WriteRawValue(JsonSerializer.Serialize(
-                value.MarkedStrings.Count == 1 ? value.MarkedStrings[0] : value.MarkedStrings as object, options));
+        throw new NotSupportedException("It only use Deserialize.");
     }
 }

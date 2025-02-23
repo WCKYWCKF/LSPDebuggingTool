@@ -38,17 +38,4 @@ public static partial class LanguageClientEx
             ? Task.FromResult(default(TResult))
             : Task.Run(() => result.Deserialize<TResult>(lspCommunication.JsonSerializerOptions));
     }
-
-    public static Task ShutdownRequest(
-        this LSPCommunicationBase lspCommunication,
-        TimeSpan timeOut)
-    {
-        return lspCommunication.SendRequest(LSPDefaultMethod.shutdown, null, timeOut);
-    }
-
-    public static Task ExitNotification(
-        this LSPCommunicationBase lspCommunication)
-    {
-        return lspCommunication.SendNotification(new NotificationMessage(LSPDefaultMethod.exit, null));
-    }
 }
