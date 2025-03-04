@@ -2,7 +2,7 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol;
-using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+using EmmyLua.LanguageServer.Framework.Protocol.Supplement;
 
 namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Union;
 

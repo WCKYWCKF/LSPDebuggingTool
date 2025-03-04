@@ -50,7 +50,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceSymbol;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.WorkspaceWatchedFile;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
-using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+using EmmyLua.LanguageServer.Framework.Protocol.Supplement;
 using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Union;
 
 namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
