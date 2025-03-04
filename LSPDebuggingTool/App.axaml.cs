@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using HotAvalonia;
 using LSPDebuggingTool.Models;
 using LSPDebuggingTool.ViewModels;
 using LSPDebuggingTool.Views;
@@ -33,6 +34,7 @@ namespace LSPDebuggingTool
     {
         public override void Initialize()
         {
+            this.EnableHotReload();
             AvaloniaXamlLoader.Load(this);
             if (SettingStorage.Instance.CurrentCulture is AppCulture.English)
                 Localization.Resources.Culture = new CultureInfo("en");

@@ -31,11 +31,6 @@ public class LSPTextFoldingProvide
     {
         FoldingManager = FoldingManager.Install(editor.TextArea);
     }
-
-    ~LSPTextFoldingProvide()
-    {
-        FoldingManager.Uninstall(FoldingManager);
-    }
 }
 
 //todo 等待更多功能的拓展

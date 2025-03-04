@@ -1,6 +1,8 @@
-﻿namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+﻿using System.Text.Json.Serialization;
 
-public class WorkDoneProgressCancelParams
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+
+public record WorkDoneProgressCancelParams
 {
-    
+    [JsonPropertyName("token")] public required ProgressToken Token { get; init; }
 }

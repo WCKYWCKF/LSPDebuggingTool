@@ -62,4 +62,15 @@
         <ProjectReference Include="..\AvaloniaEditLSPIntegration\AvaloniaEditLSPIntegration.csproj"/>
         <ProjectReference Include="..\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.csproj"/>
     </ItemGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <!-- If you're a .vbproj user, replace ';' with ',' -->
+        <DefineConstants>$(DefineConstants);ENABLE_XAML_HOT_RELOAD</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Condition="$(DefineConstants.Contains(ENABLE_XAML_HOT_RELOAD))" Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
+        <PackageReference Condition="$(DefineConstants.Contains(ENABLE_XAML_HOT_RELOAD))" Include="HotAvalonia" Version="2.1.0" />
+        <PackageReference Include="HotAvalonia.Extensions" Version="2.1.0" PrivateAssets="All" />
+    </ItemGroup>
 </Project>

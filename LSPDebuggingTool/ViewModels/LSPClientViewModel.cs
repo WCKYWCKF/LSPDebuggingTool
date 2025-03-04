@@ -28,6 +28,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 using EmmyLua.LanguageServer.Framework.Server;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using Ursa.Controls;
 using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
 using SemanticTokensEdit = AvaloniaEditLSPIntegration.SemanticTokensEdit;
 using TextDocument = AvaloniaEdit.Document.TextDocument;

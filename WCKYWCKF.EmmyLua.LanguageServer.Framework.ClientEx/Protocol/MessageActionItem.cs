@@ -1,6 +1,8 @@
-﻿namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+﻿using System.Text.Json.Serialization;
 
-public class MessageActionItem
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+
+public record MessageActionItem
 {
-    
+    [JsonPropertyName("title")] public required string Title { get; init; }
 }

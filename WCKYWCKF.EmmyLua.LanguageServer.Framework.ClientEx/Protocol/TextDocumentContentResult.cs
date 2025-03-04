@@ -1,6 +1,8 @@
-﻿namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+﻿using System.Text.Json.Serialization;
 
-public class TextDocumentContentResult
+namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
+
+public record TextDocumentContentResult
 {
-    
+    [JsonPropertyName("text")] public required string Text { get; init; }
 }

@@ -3,7 +3,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Model;
 
 namespace WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.Protocol;
 
-public record TextDocumentContentParams
+public record TextDocumentContentRefreshParams()
 {
     [JsonPropertyName("uri")] public required DocumentUri Uri { get; init; }
 }
