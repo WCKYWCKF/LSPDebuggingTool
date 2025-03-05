@@ -21,7 +21,7 @@ public class
     {
         var jsonNode = JsonNode.Parse(ref reader);
         if (jsonNode is JsonArray)
-            return new() { InlineCompletionItems = jsonNode.Deserialize<List<InlineCompletionItem>>() };
+            return new() { InlineCompletionItems = jsonNode.Deserialize<List<InlineCompletionItem>>(options) };
         if (jsonNode?["items"] != null)
             return new() { InlineCompletionList = jsonNode.Deserialize<InlineCompletionList>(options) };
         return new();

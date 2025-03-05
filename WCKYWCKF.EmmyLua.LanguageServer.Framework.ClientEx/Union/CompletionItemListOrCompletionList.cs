@@ -19,9 +19,9 @@ public class CompletionItemListOrCompletionListJsonConverter : JsonConverter<Com
     {
         var jsonNode = JsonNode.Parse(ref reader);
         if (jsonNode is JsonArray)
-            return new() { CompletionItems = jsonNode.Deserialize<List<CompletionItem>>() };
+            return new() { CompletionItems = jsonNode.Deserialize<List<CompletionItem>>(options) };
         if (jsonNode?["isIncomplete"] != null)
-            return new() { CompletionList = jsonNode.Deserialize<CompletionList>() };
+            return new() { CompletionList = jsonNode.Deserialize<CompletionList>(options) };
 
         return new();
     }

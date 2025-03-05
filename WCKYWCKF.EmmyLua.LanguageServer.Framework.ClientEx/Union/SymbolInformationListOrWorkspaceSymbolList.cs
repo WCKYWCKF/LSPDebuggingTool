@@ -23,9 +23,9 @@ public class
         var jsonArray = JsonNode.Parse(ref reader) as JsonArray;
         if (jsonArray?.Count is null or 0) return new();
         if (jsonArray[0]?["containerName"] != null)
-            return new() { WorkspaceSymbols = jsonArray.Deserialize<List<WorkspaceSymbol>>() };
+            return new() { WorkspaceSymbols = jsonArray.Deserialize<List<WorkspaceSymbol>>(options) };
         if (jsonArray[0]?["location"] != null)
-            return new() { SymbolInformations = jsonArray.Deserialize<List<SymbolInformation>>() };
+            return new() { SymbolInformations = jsonArray.Deserialize<List<SymbolInformation>>(options) };
         return new();
     }
 

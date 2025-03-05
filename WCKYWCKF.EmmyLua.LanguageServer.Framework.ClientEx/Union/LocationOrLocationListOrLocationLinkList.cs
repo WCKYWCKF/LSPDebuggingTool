@@ -25,9 +25,9 @@ public class
         if (jsonNode is JsonArray jsonArray && jsonArray.Count != 0)
         {
             if (jsonArray[0]?["uri"] != null)
-                return new() { Locations = jsonArray.Deserialize<List<Location>>() };
+                return new() { Locations = jsonArray.Deserialize<List<Location>>(options) };
             if (jsonArray[0]?["originSelectionRange"] != null)
-                return new() { LocationLinks = jsonArray.Deserialize<List<LocationLink>>() };
+                return new() { LocationLinks = jsonArray.Deserialize<List<LocationLink>>(options) };
         }
 
         return new();
