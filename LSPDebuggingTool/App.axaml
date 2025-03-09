@@ -4,19 +4,24 @@
              xmlns:semi="https://irihi.tech/semi"
              xmlns:semi-ursa="https://irihi.tech/ursa/themes/semi"
              xmlns:micon="using:Material.Icons.Avalonia"
+             xmlns:views="clr-namespace:LSPDebuggingTool.Views"
              RequestedThemeVariant="Default">
     <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
     <Application.Resources>
         <FontFamily x:Key="DefaultFontFamily">avares://LSPDebuggingTool/Assets/Fonts/HarmonyOS_Sans_SC/#HarmonyOS Sans SC</FontFamily>
+        <x:Double x:Key="ControlContentThemeFontSize">12</x:Double>
+        <FontFamily x:Key="ContentControlThemeFontFamily">avares://LSPDebuggingTool/Assets/Fonts/HarmonyOS_Sans_SC/#HarmonyOS Sans SC</FontFamily>
     </Application.Resources>
     <Application.Styles>
-        <FluentTheme DensityStyle="Compact" />
         <semi:SemiTheme Locale="zh-CN" />
         <semi-ursa:SemiTheme Locale="zh-CN" />
-        <semi:SemiPopupAnimations></semi:SemiPopupAnimations>
+        <semi:SemiPopupAnimations />
         <micon:MaterialIconStyles />
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <!-- <StyleInclude Source="avares://Semi.Avalonia.DataGrid/Index.axaml" /> -->
         <!-- <StyleInclude Source="avares://Semi.Avalonia.TreeDataGrid/Index.axaml" /> -->
     </Application.Styles>
+    <Application.DataTemplates>
+        <views:ViewLocator />
+    </Application.DataTemplates>
 </Application>

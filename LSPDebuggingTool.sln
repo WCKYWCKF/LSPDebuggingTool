@@ -4,6 +4,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSPDebuggingTool", "LSPDebu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSPDebuggingTool.Desktop", "LSPDebuggingTool.Desktop\LSPDebuggingTool.Desktop.csproj", "{D43A1E2F-1A91-499A-A32B-D8A5ADC41F74}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvaloniaEditLSPIntegration", "AvaloniaEditLSPIntegration\AvaloniaEditLSPIntegration.csproj", "{82E8413A-7E65-42B0-8330-20E2C29F5CBD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCKYWCKF.LanguageClient", "WCKYWCKF.LanguageClient\WCKYWCKF.LanguageClient.csproj", "{83C75340-1BA4-4899-AC60-9DD861481359}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCKYWCKF.RxUIResourceTreeVM", "WCKYWCKF.RxUIResourceTreeVM\WCKYWCKF.RxUIResourceTreeVM.csproj", "{FF4FA38F-BC07-45AF-8D4D-D77DED1F2AF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageServer.Framework", "LanguageServer.Framework\LanguageServer.Framework\LanguageServer.Framework.csproj", "{FCF04ADF-FF81-4701-80E7-255E9C15CCBF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvaloniaEdit", "AvaloniaEdit\src\AvaloniaEdit\AvaloniaEdit.csproj", "{261B3E64-60B9-44CD-AC5F-461BD09A85B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +28,25 @@ Global
 		{D43A1E2F-1A91-499A-A32B-D8A5ADC41F74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D43A1E2F-1A91-499A-A32B-D8A5ADC41F74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D43A1E2F-1A91-499A-A32B-D8A5ADC41F74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82E8413A-7E65-42B0-8330-20E2C29F5CBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82E8413A-7E65-42B0-8330-20E2C29F5CBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82E8413A-7E65-42B0-8330-20E2C29F5CBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82E8413A-7E65-42B0-8330-20E2C29F5CBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83C75340-1BA4-4899-AC60-9DD861481359}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83C75340-1BA4-4899-AC60-9DD861481359}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83C75340-1BA4-4899-AC60-9DD861481359}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83C75340-1BA4-4899-AC60-9DD861481359}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF4FA38F-BC07-45AF-8D4D-D77DED1F2AF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF4FA38F-BC07-45AF-8D4D-D77DED1F2AF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF4FA38F-BC07-45AF-8D4D-D77DED1F2AF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF4FA38F-BC07-45AF-8D4D-D77DED1F2AF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCF04ADF-FF81-4701-80E7-255E9C15CCBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCF04ADF-FF81-4701-80E7-255E9C15CCBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCF04ADF-FF81-4701-80E7-255E9C15CCBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCF04ADF-FF81-4701-80E7-255E9C15CCBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{261B3E64-60B9-44CD-AC5F-461BD09A85B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{261B3E64-60B9-44CD-AC5F-461BD09A85B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{261B3E64-60B9-44CD-AC5F-461BD09A85B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{261B3E64-60B9-44CD-AC5F-461BD09A85B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

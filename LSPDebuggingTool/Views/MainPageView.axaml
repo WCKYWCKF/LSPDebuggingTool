@@ -1,0 +1,40 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LSPDebuggingTool.ViewModels"
+             xmlns:lang="using:LSPDebuggingTool.Localization"
+             xmlns:ursa="https://irihi.tech/ursa"
+             xmlns:waal="using:WCKY.Avalonia.AnimationLibrary"
+             xmlns:views="using:LSPDebuggingTool.Views"
+             xmlns:rxui="http://reactiveui.net"
+             xmlns:micon="using:Material.Icons.Avalonia"
+             xmlns:lspedit="using:AvaloniaEditLSPIntegration"
+             xmlns:search="using:AvaloniaEdit.Search"
+             xmlns:editing="using:AvaloniaEdit.Editing"
+             xmlns:folding="using:AvaloniaEdit.Folding"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="LSPDebuggingTool.Views.MainPageView">
+    <ursa:AspectRatioLayout Content="{Binding $parent[views:MainPageView].NowPage,Mode=OneWayToSource}">
+        <ursa:AspectRatioLayoutItem
+            StartAspectRatioValue="1.7"
+            EndAspectRatioValue="5">
+            <Panel>
+                <TextBlock
+                    Text="{Binding $parent[ursa:AspectRatioLayout].AspectRatioValue}"
+                    VerticalAlignment="Bottom">
+                </TextBlock>
+                <views:LSPEditorIntegrationPageView>
+                    <views:LSPEditorIntegrationPageView.DataContext>
+                        <vm:LSPEditorIntegrationPageViewModel></vm:LSPEditorIntegrationPageViewModel>
+                    </views:LSPEditorIntegrationPageView.DataContext>
+                </views:LSPEditorIntegrationPageView>
+            </Panel>
+        </ursa:AspectRatioLayoutItem>
+        <ursa:AspectRatioLayoutItem
+            StartAspectRatioValue="0"
+            EndAspectRatioValue="1.7">
+            <views:LSPDocumentPageView></views:LSPDocumentPageView>
+        </ursa:AspectRatioLayoutItem>
+    </ursa:AspectRatioLayout>
+</UserControl>

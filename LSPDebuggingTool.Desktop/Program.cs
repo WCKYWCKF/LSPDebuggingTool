@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Reactive.Linq;
+using System.Collections.Generic;
 using System.Runtime.Versioning;
-using System.Threading;
-// using Akavache;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Dialogs;
-using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
-using DynamicData;
-using DynamicData.Alias;
-using DynamicData.Binding;
-using ReactiveUI;
+using EmmyLua.LanguageServer.Framework.Protocol;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
+using WCKYWCKF.LanguageClient;
+
+// using Akavache;
 
 namespace LSPDebuggingTool.Desktop;
 
@@ -27,6 +24,28 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // JsonSerializerOptions options = new();
+        // options.TypeInfoResolverChain.Add(ClientExJSC.Default);
+        // options.TypeInfoResolverChain.Add(JsonProtocolContext.Default);
+        //
+        // var json = JsonSerializer.Serialize(
+        //     new MarkedStringsOrMarkupContent()
+        //         { MarkupContent = new MarkupContent() { Value = "sdf", Kind = MarkupKind.Markdown } }, options);
+        // var markedStrings = JsonSerializer.Deserialize<MarkedStringsOrMarkupContent>(json, options);
+        // json = JsonSerializer.Serialize(
+        //     new MarkedStringsOrMarkupContent()
+        //         { MarkedStrings = [new MarkedString() { Language = "sdfsdf", Value = "sldfkjsdlfk" }] }, options);
+        //  markedStrings = JsonSerializer.Deserialize<MarkedStringsOrMarkupContent>(json, options);
+        // json = JsonSerializer.Serialize(
+        //     new MarkedStringsOrMarkupContent()
+        //     {
+        //         MarkedStrings =
+        //         [
+        //             new MarkedString() { Language = "sdfsdf", Value = "sldfkjsdlfk" },
+        //             new MarkedString() { Language = "12", Value = "4444444" }
+        //         ]
+        //     }, options);
+        //  markedStrings = JsonSerializer.Deserialize<MarkedStringsOrMarkupContent>(json, options);
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }

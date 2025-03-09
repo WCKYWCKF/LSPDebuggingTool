@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\LanguageServer.Framework\LanguageServer.Framework\LanguageServer.Framework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="LanguageClientEx.T4.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>LanguageClientEx.T4.cs</LastGenOutput>
+      </None>
+      <None Update="LSPDefaultMethod.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>LSPDefaultMethod.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="LSPDefaultMethod.cs">
+        <DependentUpon>LSPDefaultMethod.tt</DependentUpon>
+      </Compile>
+      <Compile Update="LanguageClientEx.T4.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
+      </Compile>
+      <Compile Update="LanguageClientEx.T4.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>LanguageClientEx.T4.tt</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>
