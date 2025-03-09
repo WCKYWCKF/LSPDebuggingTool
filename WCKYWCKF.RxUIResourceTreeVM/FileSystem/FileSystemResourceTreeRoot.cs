@@ -46,7 +46,11 @@ public class FileSystemResourceTreeRoot : ResourceItemRootBase
 
     private void OnFileSystemItemRenamedHandler(RenamedEventArgs obj)
     {
-        if (GetByItemPath(obj.OldFullPath) is FileSystemResourceItem item) item.Header = obj.Name;
+        if (GetByItemPath(obj.OldFullPath) is FileSystemResourceItem item)
+        {
+            var startIndex = obj.Name!.LastIndexOf(Path.DirectorySeparatorChar) + 1;
+            item.Header = obj.Name![(startIndex < 0 ? 0 : startIndex)..];
+        }
     }
 
     private void OnFileSystemItemDeletedHandler(FileSystemEventArgs obj)
