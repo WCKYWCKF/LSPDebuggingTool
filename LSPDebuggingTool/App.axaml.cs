@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Akavache;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,25 +9,8 @@ using HotAvalonia;
 using LSPDebuggingTool.Models;
 using LSPDebuggingTool.ViewModels;
 using LSPDebuggingTool.Views;
-
-namespace LSPDebuggingTool.Models
-{
-    public sealed partial class SettingStorage
-    {
-        public AppCulture CurrentCulture
-        {
-            get;
-            set => SetField(ref field, value);
-        } = AppCulture.Chinese;
-    }
-
-    public enum AppCulture
-    {
-        English,
-        Chinese
-    }
-}
-
+using Serilog;
+using Ursa.Controls;
 
 namespace LSPDebuggingTool
 {
@@ -36,8 +20,6 @@ namespace LSPDebuggingTool
         {
             this.EnableHotReload();
             AvaloniaXamlLoader.Load(this);
-            if (SettingStorage.Instance.CurrentCulture is AppCulture.English)
-                Localization.Resources.Culture = new CultureInfo("en");
         }
 
         public event Action? AppExit;
@@ -47,26 +29,21 @@ namespace LSPDebuggingTool
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                desktop.MainWindow = new MainWindow
-                {
-                    ViewModel = MainWindowViewModel.Init()
-                };
+                desktop.MainWindow = new InitialWindow();
 
                 desktop.Exit += (sender, args) =>
                 {
                     AppExit?.Invoke();
-                    RuntimeBasicInfo.Log.Information("软件已正常关闭");
+                    BlobCache.Shutdown().Wait();
+                    Log.Information("软件已正常关闭");
                 };
             }
 
-            // else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-            // {
-            //     singleViewPlatform.MainView = new MainView
-            //     {
-            //         DataContext = new MainViewModel()
-            //     };
-            // }
-            RuntimeBasicInfo.Log.Information("软件已正常启动");
+            else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+            {
+                singleViewPlatform.MainView = new UrsaView() { Content = new MainPageView() };
+            }
+
             base.OnFrameworkInitializationCompleted();
         }
     }

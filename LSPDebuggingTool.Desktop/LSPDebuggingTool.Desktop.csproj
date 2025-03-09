@@ -15,14 +15,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.4" />
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.5" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\AvaloniaEditLSPIntegration\AvaloniaEditLSPIntegration.csproj"/>
         <ProjectReference Include="..\LSPDebuggingTool\LSPDebuggingTool.csproj"/>
-        <ProjectReference Include="..\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx\WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx.csproj"/>
+        <ProjectReference Include="..\WCKYWCKF.LanguageClient\WCKYWCKF.LanguageClient.csproj" />
     </ItemGroup>
 </Project>

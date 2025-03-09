@@ -4,13 +4,21 @@
     <option name="projectPerEditor">
       <map>
         <entry key="LSPDebuggingTool/App.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/ViewModels/LSPDocumentPage.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/ViewModels/LSPEditorIntegrationPage.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/DataTemplate/LSPResultView.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/DataTemplate/LSPResultViews.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/DataTemplate/RequestParameterEditor.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/DataTemplate/RequestParameterEditors.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/InitialWindow.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/LSPDocumentPage.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/LSPEditorIntegrationPage.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/LSPServerStartInfo.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/MainView.axaml" value="LSPDebuggingTool.Browser/LSPDebuggingTool.Browser.csproj" />
+        <entry key="LSPDebuggingTool/Views/MainViewPage.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/MainWindow.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
         <entry key="LSPDebuggingTool/Views/PathPicker.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
+        <entry key="LSPDebuggingTool/Views/TitleUIInLSPEdtorIntegrationView.axaml" value="LSPDebuggingTool.Desktop/LSPDebuggingTool.Desktop.csproj" />
       </map>
     </option>
   </component>

@@ -27,7 +27,7 @@ using TextDocument = AvaloniaEdit.Document.TextDocument;
 
 namespace LSPDebuggingTool.Views;
 
-public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
+public partial class MainWindow : ReactiveUrsaWindow<MainPageViewModel>
 {
     private HighlightingColorizer? _highlightingColorizer;
 
@@ -38,67 +38,67 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
     {
         InitializeComponent();
 
-        _lSPIntegratedTextEditor.GetSemanticColor = GetSemanticColor;
-
-        this.WhenActivated(disposable =>
-        {
-            ((LSPTextEditor)_lSPIntegratedTextEditor).Events().PropertyChanged
-                .Where(x => x.Property == LSPTextEditor.DocumentProperty)
-                .Select(x => (x.OldValue as TextDocument, x.NewValue as TextDocument))
-                .Do(x =>
-                {
-                    x.Item1.Changing -= InitSemanticToekns;
-                    x.Item1.Changed -= UpdateSemanticTokensAndCodeFolding;
-                    x.Item2.Changing += InitSemanticToekns;
-                    x.Item2.Changed += UpdateSemanticTokensAndCodeFolding;
-                    if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
-                    {
-                        _linesTaskExecutor.Post(() =>
-                        {
-                            _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.InitSemanticTokens(
-                                lspClientViewModel.SemanticTokensFull(), x.Item2.Version);
-                            var foldingRange = lspClientViewModel.FoldingRanges();
-                            _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
-                                .Select(x => new FoldingRange((int)x.StartLine + 1, (int)x.EndLine + 1)).ToList());
-                        });
-                    }
-                })
-                .Subscribe()
-                .DisposeWith(disposable);
-        });
+        // _lSPIntegratedTextEditor.GetSemanticColor = GetSemanticColor;
+        //
+        // this.WhenActivated(disposable =>
+        // {
+        //     ((LSPTextEditor)_lSPIntegratedTextEditor).Events().PropertyChanged
+        //         .Where(x => x.Property == LSPTextEditor.DocumentProperty)
+        //         .Select(x => (x.OldValue as TextDocument, x.NewValue as TextDocument))
+        //         .Do(x =>
+        //         {
+        //             x.Item1.Changing -= InitSemanticToekns;
+        //             x.Item1.Changed -= UpdateSemanticTokensAndCodeFolding;
+        //             x.Item2.Changing += InitSemanticToekns;
+        //             x.Item2.Changed += UpdateSemanticTokensAndCodeFolding;
+        //             if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
+        //             {
+        //                 _linesTaskExecutor.Post(() =>
+        //                 {
+        //                     _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.InitSemanticTokens(
+        //                         lspClientViewModel.SemanticTokensFull(), x.Item2.Version);
+        //                     var foldingRange = lspClientViewModel.FoldingRanges();
+        //                     _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
+        //                         .Select(x => new FoldingRange((int)x.StartLine + 1, (int)x.EndLine + 1)).ToList());
+        //                 });
+        //             }
+        //         })
+        //         .Subscribe()
+        //         .DisposeWith(disposable);
+        // });
     }
 
     private void InitSemanticToekns(object? sender, DocumentChangeEventArgs e)
     {
-        if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
-        {
-            var start = _lSPIntegratedTextEditor.Document.GetLocation(e.Offset);
-            var end = _lSPIntegratedTextEditor.Document.GetLocation(e.Offset + e.RemovalLength);
-            _linesTaskExecutor.Post(() =>
-            {
-                lspClientViewModel.DocumentContentChanged(start, end, e.RemovalLength, e.InsertedText.Text);
-            });
-        }
+        // if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
+        // {
+        //     var start = _lSPIntegratedTextEditor.Document.GetLocation(e.Offset);
+        //     var end = _lSPIntegratedTextEditor.Document.GetLocation(e.Offset + e.RemovalLength);
+        //     _linesTaskExecutor.Post(() =>
+        //     {
+        //         lspClientViewModel.DocumentContentChanged(start, end, e.RemovalLength, e.InsertedText.Text);
+        //     });
+        // }
     }
 
     private void UpdateSemanticTokensAndCodeFolding(object? sender, DocumentChangeEventArgs e)
     {
-        if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
-            _linesTaskExecutor.Post(() =>
-            {
-                var version = Dispatcher.UIThread.InvokeAsync(() => _lSPIntegratedTextEditor.Document.Version);
-                var result = lspClientViewModel.SemanticTokensDelta();
-                if (result.Item1 is not null)
-                    _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item1,
-                        version.Result);
-                if (result.Item2 is not null)
-                    _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item2,
-                        version.Result);
-
-                var foldingRange = lspClientViewModel.FoldingRanges();
-                _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
-                    .Select(x => new FoldingRange((int)x.StartLine + 1, (int)x.EndLine + 1)).ToList());
-            });
+        // if (ViewModel?.LSPClientViewModel is { } lspClientViewModel)
+        //     _linesTaskExecutor.Post(() =>
+        //     {
+        //         var version = Dispatcher.UIThread.InvokeAsync(() => _lSPIntegratedTextEditor.Document.Version);
+        //         var result = lspClientViewModel.SemanticTokensDelta();
+        //         if (result.Item1 is not null)
+        //             _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item1,
+        //                 version.Result);
+        //         if (result.Item2 is not null)
+        //             _lSPIntegratedTextEditor.LSPSemanticHighlightingEngine.UpdateSemanticTokens(result.Item2,
+        //                 version.Result);
+        //
+        //         var foldingRange = lspClientViewModel.FoldingRanges();
+        //         _lSPIntegratedTextEditor.LspTextFoldingProvider.UpdateCodeFolding(foldingRange
+        //             .Select(x => new FoldingRange((int)x.StartLine + 1, (int)x.EndLine + 1)).ToList());
+        //     });
     }
 
 
@@ -114,17 +114,17 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 
     private void ArgumentTextBox_OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox textBox) return;
-        CompositeDisposable disposable = new();
-        textBox.Unloaded += (o, args) => disposable.Dispose();
-        textBox.Events().LostFocus.Select(args => args.Source is not TextBox textBox1 ? string.Empty : textBox1.Text)
-            .InvokeCommand(this, x => x.ViewModel!.LSPClientViewModel!.ArgumentEditCompleteCheckCommand!)
-            .DisposeWith(disposable);
-        if (string.IsNullOrEmpty(textBox.Text))
-        {
-            textBox.SelectAll();
-            if (textBox.Focus() is false) throw new Exception("获取焦点失败");
-        }
+        // if (sender is not TextBox textBox) return;
+        // CompositeDisposable disposable = new();
+        // textBox.Unloaded += (o, args) => disposable.Dispose();
+        // textBox.Events().LostFocus.Select(args => args.Source is not TextBox textBox1 ? string.Empty : textBox1.Text)
+        //     .InvokeCommand(this, x => x.ViewModel!.LSPClientViewModel!.ArgumentEditCompleteCheckCommand!)
+        //     .DisposeWith(disposable);
+        // if (string.IsNullOrEmpty(textBox.Text))
+        // {
+        //     textBox.SelectAll();
+        //     if (textBox.Focus() is false) throw new Exception("获取焦点失败");
+        // }
     }
 
     private void Open_Ancillary_Information_File(object? sender, RoutedEventArgs e)
@@ -142,7 +142,7 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
             AllowMultiple = false,
 #pragma warning disable VSTHRD002
             SuggestedStartLocation =
-                storageProvider.TryGetFolderFromPathAsync(RuntimeBasicInfo.AncillaryInformationPath).Result
+                storageProvider.TryGetFolderFromPathAsync(SettingsStorage.Instance!.AncillaryInformationPath!).Result
 #pragma warning restore VSTHRD002
         };
 
@@ -170,7 +170,7 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
             },
 #pragma warning disable VSTHRD002
             SuggestedStartLocation =
-                storageProvider.TryGetFolderFromPathAsync(RuntimeBasicInfo.AncillaryInformationPath).Result
+                storageProvider.TryGetFolderFromPathAsync(SettingsStorage.Instance!.AncillaryInformationPath!).Result
 #pragma warning restore VSTHRD002
         };
 
@@ -185,16 +185,16 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 
     protected override void OnClosed(EventArgs e)
     {
-        base.OnClosed(e);
-        ViewModel?.LSPClientViewModel?.Dispose();
-        ViewModel = null;
+        // base.OnClosed(e);
+        // ViewModel?.LSPClientViewModel?.Dispose();
+        // ViewModel = null;
     }
 
     private void TabStrip_OnPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property != TabStrip.SelectedIndexProperty) return;
-        if (_transitioningContentControl is null) return;
-        _transitioningContentControl.IsTransitionReversed = (int)e.OldValue! > (int)e.NewValue!;
+        // if (e.Property != TabStrip.SelectedIndexProperty) return;
+        // if (_transitioningContentControl is null) return;
+        // _transitioningContentControl.IsTransitionReversed = (int)e.OldValue! > (int)e.NewValue!;
     }
 
     private void _tabStrip_OnActualThemeVariantChanged(object? sender, EventArgs e)
@@ -211,15 +211,15 @@ public partial class MainWindow : ReactiveUrsaWindow<MainWindowViewModel>
 
     private void StyledElement_OnInitialized(object? sender, EventArgs e)
     {
-        if (sender is ReactiveUserControl<TVEFileItem> control)
-            control.WhenActivated(disposable =>
-            {
-                control.Events().DoubleTapped
-                    .Select(_ => control.ViewModel)
-                    .Where(x => x != null)
-                    .InvokeCommand(ViewModel?.LSPClientViewModel?.OpenFileCommand!)
-                    .DisposeWith(disposable);
-            });
+        // if (sender is ReactiveUserControl<TVEFileItem> control)
+        //     control.WhenActivated(disposable =>
+        //     {
+        //         control.Events().DoubleTapped
+        //             .Select(_ => control.ViewModel)
+        //             .Where(x => x != null)
+        //             .InvokeCommand(ViewModel?.LSPClientViewModel?.OpenFileCommand!)
+        //             .DisposeWith(disposable);
+        //     });
     }
 
 #pragma warning disable VSTHRD100

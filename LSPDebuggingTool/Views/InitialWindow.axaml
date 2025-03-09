@@ -1,0 +1,37 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="LSPDebuggingTool.Views.InitialWindow"
+        Title="LSPDebuggingTool"
+        Height="225"
+        Width="400"
+        CanResize="False">
+    <Grid
+        RowDefinitions="*,*,Auto">
+        <Grid.Background>
+            <ImageBrush Source="avares://LSPDebuggingTool/Assets/Initial Page Background Image.png" Opacity="0.5"></ImageBrush>
+        </Grid.Background>
+        <TextBlock
+            Grid.Row="0"
+            TextAlignment="Center"
+            FontSize="32"
+            VerticalAlignment="Center"
+            FontStretch="SemiCondensed"
+            FontWeight="Bold"
+            Text="LSPDebuggingTool">
+        </TextBlock>
+        <TextBlock
+            TextAlignment="Center"
+            VerticalAlignment="Bottom"
+            Text="Model（MVVM）正在初始化，这只需要几秒钟"
+            Grid.Row="1">
+        </TextBlock>
+        <ProgressBar
+            Grid.Row="2"
+            IsIndeterminate="True"
+            ShowProgressText="False">
+        </ProgressBar>
+    </Grid>
+</Window>

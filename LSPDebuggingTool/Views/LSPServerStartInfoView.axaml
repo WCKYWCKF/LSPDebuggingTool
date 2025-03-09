@@ -1,0 +1,65 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LSPDebuggingTool.ViewModels"
+             xmlns:lang="using:LSPDebuggingTool.Localization"
+             xmlns:ursa="https://irihi.tech/ursa"
+             xmlns:waal="using:WCKY.Avalonia.AnimationLibrary"
+             xmlns:views="using:LSPDebuggingTool.Views"
+             xmlns:rxui="http://reactiveui.net"
+             xmlns:micon="using:Material.Icons.Avalonia"
+             xmlns:lspedit="using:AvaloniaEditLSPIntegration"
+             xmlns:search="using:AvaloniaEdit.Search"
+             xmlns:editing="using:AvaloniaEdit.Editing"
+             xmlns:folding="using:AvaloniaEdit.Folding"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="LSPDebuggingTool.Views.LSPServerStartInfoView">
+    <UserControl.Resources>
+        <DataTemplate x:Key="InternalItemTemplate" DataType="vm:StringUI">
+            <DockPanel Margin="0,1,0,1">
+                <Button Content="移除"
+                        DockPanel.Dock="Right"
+                        Margin="1,0,0,0"
+                        CommandParameter="{Binding Text}" />
+                <TextBox
+                    Margin="0,0"
+                    DockPanel.Dock="Left" />
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid RowDefinitions="*,Auto">
+        <ursa:Form
+            Grid.Row="0"
+            MinHeight="300"
+            HorizontalAlignment="Stretch" LabelAlignment="Left" LabelWidth="*">
+            <ursa:PathPicker
+                ursa:FormItem.Label="LSP服务器可执行文件路径"
+                Title="使用文件选择器"
+                UsePickerType="OpenFile"
+                FileFilter="[可执行文件,*.exe]"
+                Margin="1,0,0,0" />
+            <ScrollViewer>
+                <ursa:FormItem.Label>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="启动时传参" VerticalAlignment="Center" />
+                        <Button Content="添加"
+                                Classes="Small" />
+                    </StackPanel>
+                </ursa:FormItem.Label>
+                <ItemsRepeater ItemTemplate="{StaticResource InternalItemTemplate}">
+                </ItemsRepeater>
+            </ScrollViewer>
+        </ursa:Form>
+        <ursa:IconButton
+            Grid.Row="1"
+            HorizontalAlignment="Stretch">
+            <TransitioningContentControl
+                Content="启动Language Server">
+                <TransitioningContentControl.PageTransition>
+                    <waal:PageSlide></waal:PageSlide>
+                </TransitioningContentControl.PageTransition>
+            </TransitioningContentControl>
+        </ursa:IconButton>
+    </Grid>
+</UserControl>

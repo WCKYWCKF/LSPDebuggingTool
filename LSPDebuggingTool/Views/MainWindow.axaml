@@ -7,7 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:waal="using:WCKY.Avalonia.AnimationLibrary"
-    xmlns:views="clr-namespace:LSPDebuggingTool.Views"
+    xmlns:views="using:LSPDebuggingTool.Views"
     xmlns:rxui="http://reactiveui.net"
     xmlns:micon="using:Material.Icons.Avalonia"
     xmlns:lspedit="using:AvaloniaEditLSPIntegration"
@@ -17,250 +17,23 @@
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="LSPDebuggingTool.Views.MainWindow"
     Icon="/Assets/Favicon/favicon.ico"
-    x:DataType="vm:MainWindowViewModel"
-    Title="{x:Static vm:MainWindowViewModel.AppTitle}">
-    <ursa:UrsaWindow.LeftContent>
-        <StackPanel Orientation="Horizontal" Spacing="1">
-            <ursa:ButtonGroup>
-                <Button Content="{x:Static lang:Resources.Open_Ancillary_Information_File}"
-                        Command="{Binding LoadAncillaryInfoCommand}"
-                        Click="Open_Ancillary_Information_File" />
-                <Button Content="{x:Static lang:Resources.Save_Ancillary_Information_File}"
-                        Command="{Binding SaveAncillaryInfoCommand}" />
-                <Button Content="创建新附属信息文件" Command="{Binding CreateAncillaryInfoFileCommand}"
-                        Click="CreateAncillaryInfoFileCommand" />
-            </ursa:ButtonGroup>
-            <TextBlock
-                IsVisible="{Binding !!$self.Text}" VerticalAlignment="Center"
-                Text="{Binding AncillaryInfoFilePath,StringFormat='当前使用：{0}',Converter={x:Static views:AncillaryInfoFilePathConverter.Default}}" />
-        </StackPanel>
-    </ursa:UrsaWindow.LeftContent>
-    <ursa:UrsaWindow.RightContent>
-        <ursa:ThemeToggleButton IsThreeState="True" />
-    </ursa:UrsaWindow.RightContent>
-    <Grid Margin="0,36,0,0" RowDefinitions="Auto,*" IsEnabled="{Binding IsAncillaryInfoLoaded}">
-        <TabStrip
-            Name="TabStrip"
-            SelectedIndex="0"
-            PropertyChanged="TabStrip_OnPropertyChanged"
-            Grid.Row="0">
-            <TabStripItem Content="{x:Static lang:Resources.LSP_Startup_Parameters}">
-                <TabStripItem.Tag>
-                    <!-- LSP初始化页面 -->
-                    <Grid
-                        RowDefinitions="*,Auto">
-                        <Border
-                            Grid.Row="0" Theme="{DynamicResource CardBorder}">
-                            <ScrollViewer>
-                                <ursa:Form
-                                    HorizontalAlignment="Stretch" LabelAlignment="Left" LabelWidth="*">
-                                    <ursa:FormGroup
-                                        Header="启动参数">
-                                        <ursa:PathPicker
-                                            ursa:FormItem.Label="LSP服务器可执行文件路径"
-                                            Title="使用文件选择器"
-                                            UsePickerType="OpenFile"
-                                            FileFilter="[可执行文件,*.exe]"
-                                            Margin="1,0,0,0"
-                                            SelectedPathsText="{Binding LSPClientViewModel.FileName,Mode=TwoWay}" />
-                                        <ItemsRepeater
-                                            DockPanel.Dock="Bottom"
-                                            ItemsSource="{Binding LSPClientViewModel.Arguments}"
-                                            Margin="0,1,0,0"
-                                            MaxHeight="200">
-                                            <ursa:FormItem.Label>
-                                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                                    <TextBlock Text="启动时传参" VerticalAlignment="Center" />
-                                                    <Button Content="添加"
-                                                            Classes="Small"
-                                                            Command="{Binding LSPClientViewModel.AddArgumentCommand}" />
-                                                </StackPanel>
-                                            </ursa:FormItem.Label>
-                                            <ItemsRepeater.ItemTemplate>
-                                                <DataTemplate>
-                                                    <DockPanel Margin="0,1,0,1">
-                                                        <Button Content="移除"
-                                                                DockPanel.Dock="Right"
-                                                                Margin="1,0,0,0"
-                                                                Command="{Binding RelativeSource={RelativeSource FindAncestor,AncestorType=views:MainWindow},Path=ViewModel.LSPClientViewModel.RemoveArgumentCommand}"
-                                                                CommandParameter="{Binding}" />
-                                                        <TextBox Text="{Binding Text,Mode=TwoWay}"
-                                                                 Loaded="ArgumentTextBox_OnLoaded"
-                                                                 Margin="0,0"
-                                                                 DockPanel.Dock="Left" />
-                                                    </DockPanel>
-                                                </DataTemplate>
-                                            </ItemsRepeater.ItemTemplate>
-                                        </ItemsRepeater>
-                                    </ursa:FormGroup>
-                                    <ursa:FormGroup
-                                        Header="LSP初始化参数">
-                                        <!-- <ursa:FormGroup -->
-                                        <!--     Header="常用参数"> -->
-                                        <!-- </ursa:FormGroup> -->
-                                        <DockPanel ursa:FormItem.Label="根路径">
-                                            <Button
-                                                DockPanel.Dock="Right"
-                                                Content="使用文件夹选择器"
-                                                Margin="1,0,0,0"
-                                                Click="LaunchFolderPicker"
-                                                Tag="{Binding LSPClientViewModel.RootPath,Mode=TwoWay}" />
-                                            <TextBox
-                                                DockPanel.Dock="Left"
-                                                Text="{Binding LSPClientViewModel.RootPath}"
-                                                HorizontalAlignment="Stretch" />
-                                        </DockPanel>
-                                        <DockPanel ursa:FormItem.Label="工作区文件夹路径">
-                                            <Button
-                                                DockPanel.Dock="Right"
-                                                Content="使用文件夹选择器"
-                                                Click="LaunchFolderPicker"
-                                                Margin="1,0,0,0"
-                                                Tag="{Binding LSPClientViewModel.WorkspaceFolder,Mode=TwoWay}" />
-                                            <TextBox
-                                                Text="{Binding LSPClientViewModel.WorkspaceFolder}"
-                                                DockPanel.Dock="Left"
-                                                HorizontalAlignment="Stretch" />
-                                        </DockPanel>
-                                    </ursa:FormGroup>
-                                </ursa:Form>
-                            </ScrollViewer>
-                        </Border>
-
-                        <ursa:ButtonGroup
-                            Grid.Row="1"
-                            Margin="5"
-                            HorizontalAlignment="Right">
-                            <Button
-                                Content="关闭LSP服务器"
-                                Command="{Binding LSPClientViewModel.CloseLSPServerCommand}" />
-                            <Button
-                                Content="启动或重启LSP服务器"
-                                Command="{Binding LSPClientViewModel.StartLSPServerCommand}" />
-                        </ursa:ButtonGroup>
-                    </Grid>
-                </TabStripItem.Tag>
-            </TabStripItem>
-            <TabStripItem Content="LSP AvaloniaEdit集成">
-                <TabStripItem.Tag>
-                    <Grid ColumnDefinitions="3*,7*" RowDefinitions="Auto,*,Auto"
-                          IsEnabled="{Binding IsAncillaryInfoLoaded}">
-                        <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Theme="{DynamicResource CardBorder}">
-                            <TabControl>
-                                <TabItem Header="工作区解决方案查看器">
-                                    <TreeView
-                                        x:Name="_fileSystemTreeView"
-                                        ItemsSource="{Binding LSPClientViewModel.FileSystems.Items}">
-                                        <TreeView.DataTemplates>
-                                            <DataTemplate DataType="vm:TVEFileItem">
-                                                <rxui:ReactiveUserControl x:TypeArguments="vm:TVEFileItem"
-                                                                          Background="Transparent"
-                                                                          Initialized="StyledElement_OnInitialized">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <micon:MaterialIcon
-                                                            Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
-                                                        <TextBlock Text="{Binding Name}" />
-                                                    </StackPanel>
-                                                </rxui:ReactiveUserControl>
-                                            </DataTemplate>
-                                            <TreeDataTemplate DataType="vm:TVEFolderItem" ItemsSource="{Binding Items}">
-                                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                                    <micon:MaterialIcon
-                                                        Kind="{Binding .,Converter={x:Static views:GetIconForTVEItemBase.Instance}}" />
-                                                    <TextBlock Text="{Binding Name}" />
-                                                </StackPanel>
-                                            </TreeDataTemplate>
-                                        </TreeView.DataTemplates>
-                                    </TreeView>
-                                </TabItem>
-                                <TabItem Header="LSP Server请求日志" />
-                            </TabControl>
-                        </Border>
-                        <TabStrip Name="_openedTextFiles" Grid.Row="0" Grid.Column="1"
-                                  ItemsSource="{Binding LSPClientViewModel.ViewOpenedTexts}"
-                                  SelectedItem="{Binding LSPClientViewModel.SelectedOpenedText}">
-                            <TabStrip.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="3">
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                        <Button Classes="Small" Theme="{DynamicResource BorderlessButton}"
-                                                Content="{micon:MaterialIconExt Close}"
-                                                Command="{Binding CloseCommand}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </TabStrip.ItemTemplate>
-                        </TabStrip>
-                        <!-- <aedit:TextEditor x:Name="_lSPIntegratedTextEditor" -->
-                        <!--                   Grid.Row="1" Grid.Column="1" -->
-                        <!--                   ShowLineNumbers="True" -->
-                        <!--                   Document="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).Content}" -->
-                        <!--                   Tag="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem)}" -->
-                        <!--                   FontFamily="Cascadia Code,Consolas,Menlo,Monospace"> -->
-                        <!--     <aedit:TextEditor.KeyBindings> -->
-                        <!--         <KeyBinding Gesture="Ctrl+S" -->
-                        <!--                     Command="{Binding #_openedTextFiles.((vm:TVEFileItem)SelectedItem).SaveCommand}" /> -->
-                        <!--     </aedit:TextEditor.KeyBindings> -->
-                        <!-- </aedit:TextEditor> -->
-                        <lspedit:LSPTextEditor
-                            x:Name="_lSPIntegratedTextEditor"
-                            IsEnabled="{Binding !!LSPClientViewModel.SelectedOpenedText}"
-                            Grid.Row="1" Grid.Column="1"
-                            ShowLineNumbers="True"
-                            Document="{Binding LSPClientViewModel.SelectedOpenedText.Content,FallbackValue={x:Static vm:TVEFileItem.NullDocument}}"
-                            FontFamily="Cascadia Code,Consolas,Menlo,Monospace">
-                            <lspedit:LSPTextEditor.Styles>
-                                <Style Selector="folding|FoldingMargin">
-                                    <Setter Property="FoldingMarkerBrush" Value="{DynamicResource SemiColorText3}"></Setter>
-                                    <Setter Property="FoldingMarkerBackgroundBrush"
-                                            Value="{DynamicResource SemiColorBackground0}">
-                                    </Setter>
-                                    <Setter Property="SelectedFoldingMarkerBrush"
-                                            Value="{DynamicResource SemiColorText0}">
-                                    </Setter>
-                                    <Setter Property="SelectedFoldingMarkerBackgroundBrush"
-                                            Value="{DynamicResource SemiColorBackground4}">
-                                    </Setter>
-                                </Style>
-                                <Style Selector="search|SearchPanel">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderCardBorderBrush}" />
-                                    <Setter Property="Background" Value="{DynamicResource BorderCardBackground}" />
-                                </Style>
-                                <Style Selector="editing|TextArea">
-                                    <Setter Property="SelectionBrush" Value="{DynamicResource TextBoxSelectionBackground}" />
-                                </Style>
-                            </lspedit:LSPTextEditor.Styles>
-                        </lspedit:LSPTextEditor>
-                    </Grid>
-                </TabStripItem.Tag>
-            </TabStripItem>
-        </TabStrip>
-        <TransitioningContentControl x:Name="_transitioningContentControl" Grid.Row="1"
-                                     Content="{Binding #TabStrip.((TabStripItem)SelectedItem).Tag}">
-            <TransitioningContentControl.PageTransition>
-                <CompositePageTransition>
-                    <waal:PageSlide
-                        FillMode="None"
-                        Duration="0,0,0.5">
-                        <waal:PageSlide.SlideInEasing>
-                            <CubicEaseInOut />
-                        </waal:PageSlide.SlideInEasing>
-                        <waal:PageSlide.SlideOutEasing>
-                            <CubicEaseInOut />
-                        </waal:PageSlide.SlideOutEasing>
-                    </waal:PageSlide>
-                    <waal:CrossFade
-                        FillMode="None"
-                        Duration="0,0,0.2">
-                        <waal:CrossFade.FadeInEasing>
-                            <SineEaseInOut />
-                        </waal:CrossFade.FadeInEasing>
-                        <waal:CrossFade.FadeOutEasing>
-                            <SineEaseInOut />
-                        </waal:CrossFade.FadeOutEasing>
-                    </waal:CrossFade>
-                </CompositePageTransition>
-            </TransitioningContentControl.PageTransition>
-        </TransitioningContentControl>
-        <ursa:OverlayDialogHost Grid.ColumnSpan="10" Grid.RowSpan="10" HostId="root" IsTopLevel="True" />
-    </Grid>
+    x:DataType="vm:MainPageViewModel"
+    WindowStartupLocation="CenterOwner"
+    Title="LSPDebuggingTool">
+    <ursa:UrsaWindow.Styles>
+        <Style Selector="ursa|TitleBar">
+            <Setter Property="HorizontalAlignment" Value="Right"></Setter>
+        </Style>
+    </ursa:UrsaWindow.Styles>
+    <!-- <ursa:UrsaWindow.LeftContent> -->
+    <!--     <UserControl Content="{Binding #MainPageView.NowPage.DataContext}"> -->
+    <!--         <UserControl.ContentTemplate> -->
+    <!--             <views:TitleUIViewLocator></views:TitleUIViewLocator> -->
+    <!--         </UserControl.ContentTemplate> -->
+    <!--     </UserControl> -->
+    <!-- </ursa:UrsaWindow.LeftContent> -->
+    <!-- <ursa:UrsaWindow.TitleBarContent> -->
+    <!--     <TextBlock Text="11111111" HorizontalAlignment="Center"></TextBlock> -->
+    <!-- </ursa:UrsaWindow.TitleBarContent> -->
+    <views:MainPageView Name="MainPageView"></views:MainPageView>
 </ursa:UrsaWindow>

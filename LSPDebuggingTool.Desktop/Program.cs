@@ -7,7 +7,7 @@ using Avalonia.Dialogs;
 using Avalonia.ReactiveUI;
 using EmmyLua.LanguageServer.Framework.Protocol;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Markup;
-using WCKYWCKF.EmmyLua.LanguageServer.Framework.ClientEx;
+using WCKYWCKF.LanguageClient;
 
 // using Akavache;
 

@@ -2,3 +2,6 @@
 	path = LanguageServer.Framework
 	url = https://github.com/WCKYWCKF/LanguageServer.Framework.git
 	branch = languageclient-help
+[submodule "AvaloniaEdit"]
+	path = AvaloniaEdit
+	url = https://github.com/AvaloniaUI/AvaloniaEdit.git

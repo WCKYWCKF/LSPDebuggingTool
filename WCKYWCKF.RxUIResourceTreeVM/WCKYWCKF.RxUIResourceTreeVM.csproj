@@ -8,7 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AvaloniaEdit\src\AvaloniaEdit\AvaloniaEdit.csproj" />
+        <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.3.1"/>
+        <PackageReference Include="ReactiveUI" Version="20.1.63"/>
     </ItemGroup>
 
 </Project>
